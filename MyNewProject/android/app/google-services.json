@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "971354942884",
+    "project_id": "messagingapp-f07a7",
+    "storage_bucket": "messagingapp-f07a7.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:971354942884:android:95561319a6d0f26d8a2531",
+        "android_client_info": {
+          "package_name": "dev.expo.mynewproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCiOowcrm2Dnwj-AeGc4YUzLmZitygO75I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

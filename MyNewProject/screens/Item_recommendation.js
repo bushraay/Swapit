@@ -26,7 +26,7 @@ export default function RecommendationPage() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await axios.get("http://10.20.2.155:5000/recommendedItems");
+        const response = await axios.get("http://192.168.100.174:5000/recommendedItems");
         if (response.data.status === "Ok") {
           setItems(response.data.data);
         }
@@ -37,23 +37,31 @@ export default function RecommendationPage() {
 
     fetchItems();
   }, []);
+  
   const handleSearch = async (query) => {
     setSearchQuery(query);
     
     if (query.trim() === "") {
       setIsSearching(false);
-      setSearchResults([]);
+      // Fetch recommended items again when search is cleared
+      try {
+        const response = await axios.get("http://192.168.100.174:5000/recommendedItems");
+        if (response.data.status === "Ok") {
+          setItems(response.data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching items:", error);
+      }
     } else {
       setIsSearching(true);
       try {
-        const response = await axios.get(`http://10.20.2.155:5000/searchItems?query=${encodeURIComponent(query)}`);
+        const response = await axios.get(`http://192.168.100.174:5000/searchItems?query=${encodeURIComponent(query)}`);
         if (response.data.status === "Ok") {
-          setSearchResults(response.data.data);
+          setItems(response.data.data);
         }
       } catch (error) {
         console.error("Error searching items:", error);
       }
-      setIsSearching(false);
       const searchTerms = query.toLowerCase().split(" ");
       
       // Score-based search across multiple attributes
@@ -84,14 +92,11 @@ export default function RecommendationPage() {
 
       setSearchResults(filteredResults);
     }
-  };
-  const truncateDescription = (description) => {
-    const words = description.split(" ");
-    if (words.length > 20) {
-      return words.slice(0, 20).join(" ") + "...";
-    }
-    return description;
-  };
+    };
+    const truncateDescription = (description) => {
+      const words = description.split(" ");
+      return words.length > 20 ? words.slice(0, 20).join(" ") + "..." : description;
+    };
   const getMenuItemStyle = (item) => {
     return highlightedItem === item
       ? { backgroundColor: "yellow",  borderRadius: 5 }
@@ -309,7 +314,6 @@ export default function RecommendationPage() {
     </SafeAreaProvider>
   );
 };
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

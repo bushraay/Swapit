@@ -8,7 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js"; 
+import { auth } from "F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js"; 
 const LoginPage = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,7 +33,7 @@ const LoginPage = ({ navigation }) => {
     try {
       // First, attempt MongoDB login
       const userData = { email, password };
-      const res = await axios.post('http://192.168.100.174:5000/Login', userData, { timeout: 10000 });
+      const res = await axios.post('http://10.20.4.223:5000/Login', userData, { timeout: 10000 });
 
       if (res.data.status === 'Ok') {
         // If MongoDB login successful, proceed with Firebase login/signup

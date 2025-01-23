@@ -47,18 +47,23 @@ app.post('/check-email', async (req, res) => {
 // Create account
 app.post('/CreateAccount', async (req, res) => {
    try {
-      const { f_name, l_name, email, age, university, user_name, password, user_id } = req.body;
+      const { f_name, l_name, email, age, university, user_name, password } = req.body;
 
+      // Validate required fields
+      if (!f_name || !l_name || !email || !age || !university || !user_name || !password) {
+         return res.status(400).json({ message: "All fields are required" });
+      }
+
+      // Check if user already exists
       const oldUser = await User.findOne({ email });
       if (oldUser) {
          return res.status(400).json({ message: "User already exists" });
       }
+
+      // Encrypt the password
       const encryptedPassword = await bcrypt.hash(password, 10);
-      const userId = nextUserId;
-      nextUserId++;
-      console.log("userId", userId);
-      console.log("next user",nextUserId);
-      
+
+      // Create new user
       const newUser = await User.create({
          f_name,
          l_name,
@@ -67,13 +72,12 @@ app.post('/CreateAccount', async (req, res) => {
          university,
          user_name,
          password: encryptedPassword,
-         // user_id: userId,
       });
-      // console.log("userId", user_id);
+
       res.status(201).json({ message: "User created successfully", data: newUser });
    } catch (error) {
-      console.error("Error creating user:", error);
-      res.status(500).json({ message: "Internal server error", error });
+      console.error("Error creating user:", error.message, error.stack);
+      res.status(500).json({ message: "Internal server error" });
    }
 });
 
@@ -81,21 +85,23 @@ app.post('/CreateAccount', async (req, res) => {
 app.post("/AddSkills", async (req, res) => {
    try {
       const { email, name, age, skills_i_have, category_skills_i_have } = req.body;
-      console.log("1");
+      console.log("1. Request received:", req.body); // Log incoming request
       
 
       if (!email || !skills_i_have || !category_skills_i_have) {
+         console.error("2. Missing fields:", req.body); // Log missing fields
          return res.status(400).json({ message: "Missing required fields." });
       }
 
       const user = await User.findOne({ email });
       if (!user) {
+         console.error("3. User not found for email:", email); // Log email issue
          return res.status(404).json({ message: "User not found." });
       }
-      console.log("2");
+      console.log("4. User found:", user);
 
       const newSkill = await Skills.create({
-         // user_id: user._id,
+         user_id: user._id,
          name,
          age,
          skills_i_have,
@@ -105,86 +111,14 @@ app.post("/AddSkills", async (req, res) => {
          availability: req.body.availability || "",
          email: user.email, 
       });
-      console.log("3");
+      console.log("5. New skill created:", newSkill);
 
       res.status(201).json({ message: "Skills added successfully", data: newSkill });
-      console.log("2");
    } catch (error) {
-      console.log("4");
-      console.error("Error adding skills:", error);
-      console.log("6");
+      console.error("6. Error adding skills:", error.message, error.stack); // Log full error details
       res.status(500).json({ message: "Internal server error" });
-      console.log("");
    }
 });
-
-
-
-
-// Fetch User Data from Both Collections
-// app.get('/GetUserData', async (req, res) => {
-//    const { email } = req.query;
-
-//    if (!email) {
-//        return res.status(400).json({ message: "Email is required" });
-//    }
-
-//    try {
-//        // Find the user based on the provided email
-//        const user = await User.findOne({ email });
-//        if (!user) {
-//            return res.status(404).json({ message: "User not found" });
-//        }
-
-//        // Generate full name for matching
-//        const fullName = `${user.f_name.trim()} ${user.l_name.trim()}`;
-//        console.log("Generated fullName:", fullName);
-
-//        // Debugging: Fetch all skills and map the names
-//        const skillsDataList = await Skills.find(); // Resolve the Promise
-//        console.log(skillsDataList);
-//        const skillsDatas = await Skills.findOne({ name: fullName });
-//        console.log(skillsData);
-       
-       
-//        const skillsList = skillsDataList.map(skill => skill.name.trim().toLowerCase()); // Map to lowercase names
-//        console.log("All Skills names:", skillsList);
-
-//        if (!skillsList.includes(fullName.toLowerCase())) {
-//            console.error("No match found for the fullName in Skills collection.");
-//            return res.status(404).json({
-//                message: "Skills data not found for user.",
-//                fullName: fullName
-//            });
-//        }
-
-//        // Find the matching skills entry using case-insensitive matching
-//        const skillsData = await Skills.findOne({
-//            name: { $regex: `^${fullName}$`, $options: "i" }
-//        });
-
-//        if (!skillsData) {
-//            console.error("Skills not found for:", fullName);
-//            return res.status(404).json({
-//                message: "Skills data not found for user.",
-//                fullName: fullName
-//            });
-//        }
-
-//        // Return combined data from both collections
-//        res.status(200).json({
-//            name: user.user_name,
-//            university: user.university,
-//            availability: skillsData.availability || "Not Available",
-//            skills: skillsData.skills_i_have || [],
-//            learning: skillsData.skills_i_want || [],
-//            reviews: ["Great mentor!", "Very helpful!"]
-//        });
-//    } catch (error) {
-//        console.error("Error fetching user data:", error);
-//        res.status(500).json({ message: "Error fetching user data." });
-//    }
-// });
 
 
 

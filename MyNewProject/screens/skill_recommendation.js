@@ -26,7 +26,7 @@ export default function SkillRecommendationPage() {
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const tutorsResponse = await axios.get("http://192.168.100.174:5000/recommendedTutors");
+        const tutorsResponse = await axios.get("http://10.20.4.223:5000/recommendedTutors");
         if (tutorsResponse.data.status === "Ok") {
           // Limit the tutors to 10
           setRecommendedTutors(tutorsResponse.data.data.slice(0, 10));
@@ -38,7 +38,11 @@ export default function SkillRecommendationPage() {
 
     fetchRecommendations();
   }, []);
-
+  const getMenuItemStyle = (item) => {
+    return highlightedItem === item
+      ? { backgroundColor: "yellow",  borderRadius: 5 }
+      : {};
+  };
   const handleSearch = (query) => {
     setSearchQuery(query);
     if (query.trim() === "") {
@@ -154,6 +158,58 @@ export default function SkillRecommendationPage() {
             />
           </TouchableOpacity>
         </View>
+            {/* Menu Modal */}
+        <Modal
+          visible={menuVisible}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setMenuVisible(false)}
+        >
+          <View style={styles.menuOverlay}>
+            <View style={styles.menuContainer}>
+              <TouchableOpacity
+                onPress={() => setMenuVisible(false)} // Close the menu
+                style={styles.closeButton}
+              >
+                <Text style={styles.closeText}>Close</Text>
+              </TouchableOpacity>
+              {/* Menu Items */}
+              <TouchableOpacity
+                onPress={() => navigation.navigate("SettingsPage")}
+                onPressIn={() => setHighlightedItem("Settings")}
+                onPressOut={() => setHighlightedItem("")}
+                style={[styles.menuItem, getMenuItemStyle("Settings")]}
+              >
+                <Text style={styles.menuItemText}>Settings</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                onPress={() => navigation.navigate("HistoryPage")}
+                onPressIn={() => setHighlightedItem("History")}
+                onPressOut={() => setHighlightedItem("")}
+                style={[styles.menuItem, getMenuItemStyle("History")]}
+              >
+                <Text style={styles.menuItemText}>History</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("HelpFeedbackPage")}
+                onPressIn={() => setHighlightedItem("Help and Feedback")}
+                onPressOut={() => setHighlightedItem("")}
+                style={[styles.menuItem, getMenuItemStyle("Help and Feedback")]}
+              >
+                <Text style={styles.menuItemText}>Help and Feedback</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => navigation.navigate("LoginPage")}
+                onPressIn={() => setHighlightedItem("Log Out")}
+                onPressOut={() => setHighlightedItem("")}
+                style={[styles.menuItem, getMenuItemStyle("Log Out")]}
+              >
+                <Text style={styles.menuItemText}>Log Out</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -257,4 +313,37 @@ const styles = StyleSheet.create({
     height: 30,
     tintColor: "#FFFFFF",
   },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-start",
+  },
+  menuContainer: {
+    backgroundColor: "#FFF",
+    padding: 20,
+    borderRadius: 10,
+    marginTop: 50, // Adjust as needed for better visibility
+    marginHorizontal: 20,
+  },
+  closeButton: {
+    alignSelf: "flex-end",
+    marginBottom: 20,
+    padding: 5,
+  },
+  closeText: {
+    fontSize: 16,
+    color: "#007B7F",
+    fontWeight: "bold",
+  },
+  menuItem: {
+    fontSize: 18,
+    color: "#333",
+    marginVertical: 10,
+  },
+  // LogoutItem:{
+  //   fontSize: 18,
+  //   color: "#333",
+  //   fontWeight: 'bold',
+  //   marginVertical: 10,
+  // },
 });

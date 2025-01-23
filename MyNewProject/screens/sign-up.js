@@ -13,7 +13,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import axios from 'axios';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth, database } from "C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js"; 
+import { auth, database } from "F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js"; 
 import { doc, setDoc } from 'firebase/firestore';
 
 export default function CreateAccountPage({ navigation }) {
@@ -26,6 +26,7 @@ export default function CreateAccountPage({ navigation }) {
   const [Username, setUsername] = useState("");
   const [Age, setAge] = useState("");
   const [University, setUniversity] = useState("");
+  const [Gender, setGender] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const handleFirebaseSignup = async () => {
     try {
@@ -79,7 +80,7 @@ export default function CreateAccountPage({ navigation }) {
   const checkEmailExists = async (email) => {
     try {
       // Check MongoDB
-      const mongoResponse = await axios.post('http://192.168.100.174:5000/check-email', { 
+      const mongoResponse = await axios.post('http://10.20.4.53:5000/check-email', { 
         email 
       });
       const mongoExists = mongoResponse.data.exists;
@@ -117,12 +118,13 @@ export default function CreateAccountPage({ navigation }) {
         email: email,
         age: Age,
         university: University,
+        gender: Gender,
         user_name: Username,
         password: password,
       };
   
-      const res = await axios.post("http://192.168.100.174:5000/CreateAccount", userData, {
-        timeout: 10000,
+      const res = await axios.post("http://10.20.4.223:5000/CreateAccount", userData, {
+        timeout: 20000,
       });
   
       if (res.status === 201 && res.data.message === "User created successfully") {
@@ -222,6 +224,12 @@ export default function CreateAccountPage({ navigation }) {
                 placeholder="University"
                 value={University}
                 onChangeText={setUniversity}
+              />
+              <TextInput
+                style={styles.input}
+                placeholder="Gender"
+                value={Gender}
+                onChangeText={setGender}
               />
               <TextInput
                 style={styles.input}

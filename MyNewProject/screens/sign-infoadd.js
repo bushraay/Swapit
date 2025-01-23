@@ -96,11 +96,11 @@ export default function infoaddPage() {
         };
   
         axios
-          .post("http://192.168.100.174:5000/AddSkills", skillsData, { timeout: 10000 })
+          .post("http://10.20.4.223:5000/AddSkills", skillsData, { timeout: 10000 })
           .then((res) => {
             if (res.status === 201) {
               Alert.alert("Success", res.data.message);
-              navigation.navigate("SkillRecommendationPage");
+              navigation.navigate("LoginPage");
             } else {
               Alert.alert("Error", "Failed to add skills.");
             }
@@ -110,8 +110,7 @@ export default function infoaddPage() {
             Alert.alert("Error", "An error occurred while adding skills.");
           });
       } else {
-        // User is not logged in, navigate to the login screen
-        navigation.navigate("LoginPage");
+        navigation.navigate("CreateAccountPage");
       }
     } catch (error) {
       console.error("Error handling login and adding skills:", error);
@@ -136,54 +135,54 @@ export default function infoaddPage() {
     }
   };
 
-  const handleAddSkills = async () => {
-    try {
-      // Retrieve user data from AsyncStorage
-      // const userId = await AsyncStorage.getItem("userId");
-      const userEmail = await AsyncStorage.getItem("userEmail");
-      const userName = await AsyncStorage.getItem("userName");
-      const userAge = await AsyncStorage.getItem("userAge");
+  // const handleAddSkills = async () => {
+  //   try {
+  //     // Retrieve user data from AsyncStorage
+  //     // const userId = await AsyncStorage.getItem("userId");
+  //     const userEmail = await AsyncStorage.getItem("userEmail");
+  //     const userName = await AsyncStorage.getItem("userName");
+  //     const userAge = await AsyncStorage.getItem("userAge");
   
-      if (!userEmail || !userName || !userAge) {
-        Alert.alert("Error", "User data not found. Please sign up or log in again.");
-        return;
-      }
+  //     if (!userEmail || !userName || !userAge) {
+  //       Alert.alert("Error", "User data not found. Please sign up or log in again.");
+  //       return;
+  //     }
   
-      const skillsData = {
-        user_name: userName,
-        email: userEmail, // Send email instead of user_id
-        name: userName,   // User's name from sign-up
-        age: parseInt(userAge, 10), // Convert age back to integer
-        skills_i_have: skillsHave,
-        category_skills_i_have: skillsCategoryHave,
-        skills_i_want: skillsWant,
-        category_skills_i_want: skillsCategoryWant,
-        availability,
-      };
+  //     const skillsData = {
+  //       user_name: userName,
+  //       email: userEmail, // Send email instead of user_id
+  //       name: userName,   // User's name from sign-up
+  //       age: parseInt(userAge, 10), // Convert age back to integer
+  //       skills_i_have: skillsHave,
+  //       category_skills_i_have: skillsCategoryHave,
+  //       skills_i_want: skillsWant,
+  //       category_skills_i_want: skillsCategoryWant,
+  //       availability,
+  //     };
   
-      axios
-        .post("http://192.168.100.174:5000/AddSkills", skillsData, { timeout: 10000 })
-        .then((res) => {
-          if (res.status === 201) {
-            Alert.alert("Success", res.data.message);
-            console.log("hey");
+  //     axios
+  //       .post("http://10.20.4.53:5000/AddSkills", skillsData, { timeout: 10000 })
+  //       .then((res) => {
+  //         if (res.status === 201) {
+  //           Alert.alert("Success", res.data.message);
+  //           console.log("hey");
             
-            navigation.navigate("LoginPage");
-            console.log("hey1");
+  //           navigation.navigate("LoginPage");
+  //           console.log("hey1");
             
-          } else {
-            Alert.alert("Error", "Failed to add skills.");
-          }
-        })
-        .catch((e) => {
-          console.log(e);
-          Alert.alert("Error", "An error occurred while adding skills.");
-        });
-    } catch (e) {
-      console.log(e);
-      Alert.alert("Error", "An error occurred while retrieving user data.");
-    }
-  };
+  //         } else {
+  //           Alert.alert("Error", "Failed to add skills.");
+  //         }
+  //       })
+  //       .catch((e) => {
+  //         console.log(e);
+  //         Alert.alert("Error", "An error occurred while adding skills.");
+  //       });
+  //   } catch (e) {
+  //     console.log(e);
+  //     Alert.alert("Error", "An error occurred while retrieving user data.");
+  //   }
+  // };
 
   return (
     <SafeAreaProvider>

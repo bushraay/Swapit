@@ -37,7 +37,7 @@ Notifications.setNotificationHandler({
 });
 
 const Stack = createStackNavigator();
-const API_URL = 'http://192.168.100.174:5000'; // Update this to your server URL
+const API_URL = 'http://10.20.4.223:5000'; // Update this to your server URL
 
 export default function App() {
   const [loading, setLoading] = useState(true);

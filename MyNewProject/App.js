@@ -4,7 +4,6 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-
 import SettingsPage from "./screens/settings";
 import AboutPage from "./screens/about_swap"; 
 import RecommendationPage from "./screens/Item_recommendation"; 

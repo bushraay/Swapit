@@ -8,7 +8,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js"; 
+import { auth } from "C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase"; 
 const LoginPage = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

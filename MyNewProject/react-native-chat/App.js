@@ -53,7 +53,7 @@ const TabNavigator = () => {
   );
 };
 
-const MainStack = () => (
+const MainStack = ({route}) => (
   <Stack.Navigator>
     <Stack.Screen name="Home" component={TabNavigator} options={{ headerShown: false }} />
     <Stack.Screen

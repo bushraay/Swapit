@@ -16,12 +16,15 @@ import axios from "axios";
 
 export default function RecommendationPage() {
   const navigation = useNavigation();
-  const [menuVisible, setMenuVisible] = useState(false); // State for menu visibility
+  const [menuVisible, setMenuVisible] = useState(false);
   const [highlightedItem, setHighlightedItem] = useState("");
-  const [items, setItems] = useState([]); // State to store items
+  const [items, setItems] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [showAllItems, setShowAllItems] = useState(false);
+
+  const INITIAL_ITEMS_TO_SHOW = 6;
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -43,7 +46,7 @@ export default function RecommendationPage() {
     
     if (query.trim() === "") {
       setIsSearching(false);
-      // Fetch recommended items again when search is cleared
+      setShowAllItems(false);
       try {
         const response = await axios.get("http://192.168.100.174:5000/recommendedItems");
         if (response.data.status === "Ok") {
@@ -54,6 +57,7 @@ export default function RecommendationPage() {
       }
     } else {
       setIsSearching(true);
+      setShowAllItems(true);
       try {
         const response = await axios.get(`http://192.168.100.174:5000/searchItems?query=${encodeURIComponent(query)}`);
         if (response.data.status === "Ok") {
@@ -64,7 +68,6 @@ export default function RecommendationPage() {
       }
       const searchTerms = query.toLowerCase().split(" ");
       
-      // Score-based search across multiple attributes
       const scoredResults = items.map(item => {
         let score = 0;
         const matchTerms = (text, weight) => {
@@ -74,17 +77,15 @@ export default function RecommendationPage() {
           }, 0);
         };
 
-        // Weighted scoring based on priority
-        score += matchTerms(item.ItemName, 5);    // Highest priority
+        score += matchTerms(item.ItemName, 5);
         score += matchTerms(item.PersonName, 4);
         score += matchTerms(item.Category, 3);
         score += matchTerms(item.Condition, 2);
-        score += matchTerms(item.Description, 1);  // Lowest priority
+        score += matchTerms(item.Description, 1);
 
         return { item, score };
       });
 
-      // Filter items with any matches and sort by score
       const filteredResults = scoredResults
         .filter(result => result.score > 0)
         .sort((a, b) => b.score - a.score)
@@ -92,16 +93,19 @@ export default function RecommendationPage() {
 
       setSearchResults(filteredResults);
     }
-    };
-    const truncateDescription = (description) => {
-      const words = description.split(" ");
-      return words.length > 20 ? words.slice(0, 20).join(" ") + "..." : description;
-    };
+  };
+
+  const truncateDescription = (description) => {
+    const words = description.split(" ");
+    return words.length > 20 ? words.slice(0, 20).join(" ") + "..." : description;
+  };
+
   const getMenuItemStyle = (item) => {
     return highlightedItem === item
       ? { backgroundColor: "yellow",  borderRadius: 5 }
       : {};
   };
+
   const renderItemCard = (item, index) => (
     <View key={index} style={styles.itemCard}>
       <Image source={{ uri: item.Image }} style={styles.itemImage} />
@@ -132,10 +136,31 @@ export default function RecommendationPage() {
       </View>
     </View>
   );
+
+  const renderItems = () => {
+    const displayItems = !isSearching ? items : searchResults;
+    const itemsToDisplay = (!isSearching && !showAllItems) 
+      ? displayItems.slice(0, INITIAL_ITEMS_TO_SHOW) 
+      : displayItems;
+
+    return (
+      <>
+        {itemsToDisplay.map((item, index) => renderItemCard(item, index))}
+        {!isSearching && !showAllItems && items.length > INITIAL_ITEMS_TO_SHOW && (
+          <TouchableOpacity 
+            style={styles.showMoreButton} 
+            onPress={() => setShowAllItems(true)}
+          >
+            <Text style={styles.showMoreText}>Show More Items</Text>
+          </TouchableOpacity>
+        )}
+      </>
+    );
+  };
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => setMenuVisible(true)}
@@ -146,8 +171,6 @@ export default function RecommendationPage() {
           <Text style={styles.headerTitle}>Item Dashboard</Text>
         </View>
 
-
-        {/* Search Bar */}
         <View style={styles.searchContainer}>
           <TextInput
             style={styles.searchBar}
@@ -163,62 +186,15 @@ export default function RecommendationPage() {
             />
           </TouchableOpacity>
         </View>
+
         <ScrollView style={styles.scrollContainer}>
-          {!isSearching ? (
-            items.length > 0 ? (
-              items.map((item, index) => renderItemCard(item, index))
-            ) : (
-              <Text style={styles.noItemsText}>No items available</Text>
-            )
+          {items.length > 0 ? (
+            renderItems()
           ) : (
-            searchResults.length > 0 ? (
-              searchResults.map((item, index) => renderItemCard(item, index))
-            ) : (
-              <Text style={styles.noItemsText}>No matching items found</Text>
-            )
+            <Text style={styles.noItemsText}>No items available</Text>
           )}
         </ScrollView>
 
-        {/* Recommendations */}
-        <ScrollView style={styles.scrollContainer}>
-        {items.length > 0 ? (
-        items.map((item, index) => (
-          <View key={index} style={styles.itemCard}>
-            <Image source={{ uri: item.Image }} style={styles.itemImage} />
-            <View style={styles.itemInfo}>
-              <Text style={styles.itemTitle}>{item.ItemName}</Text>
-              <Text style={styles.itemName}>Owner Name: {item.PersonName}</Text>
-              <Text style={styles.itemCategory}>Category: {item.Category}</Text>
-              <Text style={styles.itemCondition}>Condition: {item.Condition}</Text>
-              <Text style={styles.itemDescription}>
-                {truncateDescription(item.Description)}
-              </Text>
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate("ItemDescriptionPage", { 
-                    item: {
-                      Image: item.Image, 
-                      ItemName: item.ItemName, 
-                      PersonName: item.PersonName, 
-                      Category: item.Category, 
-                      Condition: item.Condition, 
-                      Description: item.Description
-                    } 
-                  })
-                }
-              >
-                <Text style={styles.readMore}>Read More</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))
-      ) : (
-        <Text style={styles.noItemsText}>No items available</Text>
-      )}
-
-        </ScrollView>
-
-        {/* Footer */}
         <View style={styles.footer}>
           <TouchableOpacity
             style={styles.footerButton}
@@ -240,7 +216,7 @@ export default function RecommendationPage() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.footerButton}
-            onPress={() => navigation.navigate("chatPage")}
+            onPress={() => navigation.navigate("MessagingPage",{previousScreen:'RecommendationPage'})}
           >
             <Image
               source={require("../assets/messages.png")}
@@ -258,7 +234,6 @@ export default function RecommendationPage() {
           </TouchableOpacity>
         </View>
 
-        {/* Menu Modal */}
         <Modal
           visible={menuVisible}
           transparent={true}
@@ -268,12 +243,11 @@ export default function RecommendationPage() {
           <View style={styles.menuOverlay}>
             <View style={styles.menuContainer}>
               <TouchableOpacity
-                onPress={() => setMenuVisible(false)} // Close the menu
+                onPress={() => setMenuVisible(false)}
                 style={styles.closeButton}
               >
                 <Text style={styles.closeText}>Close</Text>
               </TouchableOpacity>
-              {/* Menu Items */}
               <TouchableOpacity
                 onPress={() => navigation.navigate("SettingsPage")}
                 onPressIn={() => setHighlightedItem("Settings")}
@@ -313,34 +287,33 @@ export default function RecommendationPage() {
       </SafeAreaView>
     </SafeAreaProvider>
   );
-};
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFF8E1",
   },
   header: {
-  flexDirection: "row", // Align items horizontally
-  alignItems: "center", // Center items vertically
-  justifyContent: "flex-start", // Align items to the start (left)
-  padding: 15,
-  backgroundColor: "#335c67",
-},
-menuIconContainer: {
-  marginRight: 15, // Add some space between the icon and the heading
-},
-headerTitle: {
-  fontSize: 18,
-  color: "#FFF",
-  fontWeight: "bold",
-},
-
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    padding: 15,
+    backgroundColor: "#335c67",
+  },
+  menuIconContainer: {
+    marginRight: 15,
+  },
+  headerTitle: {
+    fontSize: 18,
+    color: "#FFF",
+    fontWeight: "bold",
+  },
   backArrow: {
     fontSize: 20,
     color: "#FFF",
     marginRight: 10,
   },
-  
   title: {
     color: "#FFFFFF",
     fontSize: 24,
@@ -387,7 +360,7 @@ headerTitle: {
     backgroundColor: "#FFF",
     padding: 20,
     borderRadius: 10,
-    marginTop: 50, // Adjust as needed for better visibility
+    marginTop: 50,
     marginHorizontal: 20,
   },
   closeButton: {
@@ -405,7 +378,7 @@ headerTitle: {
     color: "#333",
     marginVertical: 10,
   },
-  LogoutItem:{
+  LogoutItem: {
     fontSize: 18,
     color: "#333",
     fontWeight: 'bold',
@@ -416,24 +389,10 @@ headerTitle: {
     height: 20,
     tintColor: "#007B7F",
   },
-  recommendationHeader: {
-    marginVertical: 10,
-    padding: 7,
-    // backgroundColor: "#F7E8AF",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 10,
-  },
-  recommendationText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
-  },
   scrollContainer: {
     flex: 1,
     padding: 10,
-    paddingBottom: 80, // Ensure space for the footer
+    paddingBottom: 80,
   },
   itemCard: {
     flexDirection: "row",
@@ -467,7 +426,7 @@ headerTitle: {
     marginVertical: 5,
     fontWeight: 'bold',
   },
-  itemName:{
+  itemName: {
     fontSize: 14,
     color: "#555555",
     marginTop: 10,

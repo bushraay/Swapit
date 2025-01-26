@@ -7,11 +7,11 @@ import { auth, database } from '../config/firebase';
 import { collection, doc, where, query, onSnapshot, orderBy, setDoc, deleteDoc } from 'firebase/firestore';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
-import { colors } from "../config/constants";
-
-const Chats = ({ setUnreadCount }) => {
+import { colors } from "../config/constants"; 
+const Chats = ({ setUnreadCount,route }) => {
     const navigation = useNavigation();
     const [chats, setChats] = useState([]);
+    const previousScreen = route?.params?.previousScreen || 'SkillRecommendationPage';
     const [loading, setLoading] = useState(false);
     const [selectedItems, setSelectedItems] = useState([]);
     const [newMessages, setNewMessages] = useState({});
@@ -74,23 +74,22 @@ const Chats = ({ setUnreadCount }) => {
     }, [selectedItems]);
 
     const updateNavigationOptions = () => {
-        if (selectedItems.length > 0) {
-            navigation.setOptions({
-                headerRight: () => (
+        navigation.setOptions({
+            headerRight: selectedItems.length > 0 ? (
+                () => (
                     <TouchableOpacity style={styles.trashBin} onPress={handleDeleteChat}>
                         <Ionicons name="trash" size={24} color={colors.teal} />
                     </TouchableOpacity>
-                ),
-                headerLeft: () => (
-                    <Text style={styles.itemCount}>{selectedItems.length}</Text>
-                ),
-            });
-        } else {
-            navigation.setOptions({
-                headerRight: null,
-                headerLeft: null,
-            });
-        }
+                )
+            ) : null,
+            headerLeft: () => (
+                previousScreen ? (
+                    <TouchableOpacity onPress={() => navigation.navigate(previousScreen)}>
+                        <Ionicons name="arrow-back" size={24} color={colors.teal} />
+                    </TouchableOpacity>
+                ) : null
+            ),
+        });
     };
 
     const handleChatName = (chat) => {

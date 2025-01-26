@@ -7,7 +7,6 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
-  Modal,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -18,7 +17,8 @@ export default function SkillRecommendationPage() {
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
   const [highlightedItem, setHighlightedItem] = useState("");
-  const [recommendedTutors, setRecommendedTutors] = useState([]);
+  const [allRecommendedTutors, setAllRecommendedTutors] = useState([]);
+  const [displayedTutors, setDisplayedTutors] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -28,8 +28,9 @@ export default function SkillRecommendationPage() {
       try {
         const tutorsResponse = await axios.get("http://192.168.100.174:5000/recommendedTutors");
         if (tutorsResponse.data.status === "Ok") {
-          // Limit the tutors to 10
-          setRecommendedTutors(tutorsResponse.data.data.slice(0, 10));
+          console.log("Fetched Tutors:", tutorsResponse.data.data); // Log fetched data
+          setAllRecommendedTutors(tutorsResponse.data.data);
+          setDisplayedTutors(tutorsResponse.data.data.slice(0, 10));
         }
       } catch (error) {
         console.error("Error fetching recommendations:", error);
@@ -46,9 +47,13 @@ export default function SkillRecommendationPage() {
       setSearchResults([]);
     } else {
       setIsSearching(true);
-      const filtered = recommendedTutors.filter((tutor) =>
-        tutor["Skills I Have"].toLowerCase().includes(query.toLowerCase())
-      );
+      const normalizedQuery = query.trim().toLowerCase();
+      const filtered = allRecommendedTutors.filter((tutor) => {
+        // Ensure "Skills I Have" exists and is a string
+        const skills = tutor["Skills I Have"]?.toLowerCase() || "";
+        return skills.includes(normalizedQuery);
+      });
+      console.log("Search Results:", filtered); // Log search results
       setSearchResults(filtered);
     }
   };
@@ -100,7 +105,7 @@ export default function SkillRecommendationPage() {
               <>
                 <Text style={styles.sectionTitle}>Recommended Tutors For You:</Text>
                 <View style={styles.gridContainer}>
-                  {recommendedTutors.map((tutor, index) => renderTutorCard(tutor, index))}
+                  {displayedTutors.map((tutor, index) => renderTutorCard(tutor, index))}
                 </View>
               </>
             ) : (
@@ -136,7 +141,7 @@ export default function SkillRecommendationPage() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.footerButton}
-            onPress={() => navigation.navigate("MessagingPage")}
+            onPress={() => navigation.navigate("MessagingPage", { previousScreen: 'SkillRecommendationPage' })}
           >
             <Image
               source={require("../assets/messages.png")}
@@ -158,7 +163,6 @@ export default function SkillRecommendationPage() {
     </SafeAreaProvider>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,

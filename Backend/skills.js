@@ -1,18 +1,21 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 const SkillsSchema = new mongoose.Schema({
-  user_id: { type: mongoose.Schema.Types.ObjectId, required: true, ref: "UserInfo" },
-  name: { type: String, required: true }, // User's name
-  gender: { type: String },
-  age: { type: Number },
-  skills_i_have: { type: String, required: true },
-  category_skills_i_have: { type: String, required: true },
-  skills_i_want: { type: String },
-  category_skills_i_want: { type: String },
-  availability: { type: String },
-  email: { type: String, required: true  },
-}, {
-  collection: "Skills"
+    user_id: { type: mongoose.Schema.Types.ObjectId, required: true },
+    skills_i_have: [
+        {
+            skill: { type: String, required: true },
+            category: { type: String, required: true },
+        },
+    ],
+    skills_i_want: [
+        {
+            skill: { type: String, required: true },
+            category: { type: String, required: true },
+        },
+    ],
+    availability: { type: String, default: "" },
+    email: { type: String, required: true },
 });
 
 mongoose.model("Skills", SkillsSchema);

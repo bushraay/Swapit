@@ -26,7 +26,7 @@ export default function RecommendationPage() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await axios.get("http://10.20.4.53:5000/recommendedItems");
+        const response = await axios.get("http://10.20.5.60:5000/recommendedItems");
         if (response.data.status === "Ok") {
           setItems(response.data.data);
         }
@@ -45,7 +45,7 @@ export default function RecommendationPage() {
       setIsSearching(false);
       // Fetch recommended items again when search is cleared
       try {
-        const response = await axios.get("http://10.20.4.223:5000/recommendedItems");
+        const response = await axios.get("http://10.20.5.60:5000/recommendedItems");
         if (response.data.status === "Ok") {
           setItems(response.data.data);
         }
@@ -55,7 +55,7 @@ export default function RecommendationPage() {
     } else {
       setIsSearching(true);
       try {
-        const response = await axios.get(`http://10.20.4.223:5000/searchItems?query=${encodeURIComponent(query)}`);
+        const response = await axios.get(`http://10.20.5.60:5000/searchItems?query=${encodeURIComponent(query)}`);
         if (response.data.status === "Ok") {
           setItems(response.data.data);
         }

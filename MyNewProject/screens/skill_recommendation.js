@@ -26,7 +26,7 @@ export default function SkillRecommendationPage() {
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const tutorsResponse = await axios.get("http://10.20.4.223:5000/recommendedTutors");
+        const tutorsResponse = await axios.get("http://10.20.5.60:5000/recommendedTutors");
         if (tutorsResponse.data.status === "Ok") {
           // Limit the tutors to 10
           setRecommendedTutors(tutorsResponse.data.data.slice(0, 10));

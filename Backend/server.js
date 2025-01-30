@@ -84,39 +84,37 @@ app.post('/CreateAccount', async (req, res) => {
 // Add skills
 app.post("/AddSkills", async (req, res) => {
    try {
-      const { email, name, age, skills_i_have, category_skills_i_have } = req.body;
-      console.log("1. Request received:", req.body); // Log incoming request
-      
+       const { email, skills_i_have, skills_i_want, availability } = req.body;
 
-      if (!email || !skills_i_have || !category_skills_i_have) {
-         console.error("2. Missing fields:", req.body); // Log missing fields
-         return res.status(400).json({ message: "Missing required fields." });
-      }
+       console.log("Request Body:", req.body); // Log received data
 
-      const user = await User.findOne({ email });
-      if (!user) {
-         console.error("3. User not found for email:", email); // Log email issue
-         return res.status(404).json({ message: "User not found." });
-      }
-      console.log("4. User found:", user);
+       // Validate input
+       if (!email || !skills_i_have || !skills_i_want || !Array.isArray(skills_i_have) || !Array.isArray(skills_i_want)) {
+           console.error("Invalid input:", req.body);
+           return res.status(400).json({ message: "Invalid input format." });
+       }
 
-      const newSkill = await Skills.create({
-         user_id: user._id,
-         name,
-         age,
-         skills_i_have,
-         category_skills_i_have,
-         skills_i_want: req.body.skills_i_want || "",
-         category_skills_i_want: req.body.category_skills_i_want || "",
-         availability: req.body.availability || "",
-         email: user.email, 
-      });
-      console.log("5. New skill created:", newSkill);
+       // Check if user exists
+       const user = await User.findOne({ email });
+       if (!user) {
+           console.error("User not found for email:", email);
+           return res.status(404).json({ message: "User not found." });
+       }
 
-      res.status(201).json({ message: "Skills added successfully", data: newSkill });
+       // Create new skill entry
+       const newSkill = await Skills.create({
+           user_id: user._id,
+           skills_i_have,
+           skills_i_want,
+           availability: availability || "",
+           email: user.email,
+       });
+
+       console.log("New skill added:", newSkill);
+       res.status(201).json({ message: "Skills added successfully", data: newSkill });
    } catch (error) {
-      console.error("6. Error adding skills:", error.message, error.stack); // Log full error details
-      res.status(500).json({ message: "Internal server error" });
+       console.error("Error in /AddSkills endpoint:", error);
+       res.status(500).json({ message: "Internal server error" });
    }
 });
 

@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-start",
     padding: 15,
-    backgroundColor: "#335c67",
+    backgroundColor: "#335c67", 
   },
   menuIconContainer: {
     marginRight: 15,

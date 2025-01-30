@@ -39,9 +39,8 @@ export default function ItemDescriptionPage({ route }) {
           <View style={styles.buttonContainer}>
           <TouchableOpacity
                 style={styles.notInterestedButton}
-                // onPress={() => navigation.navigate("AddItemPage")} //redirect to message page
-                onPress={() => navigation.navigate("MessagePage")}
-              >
+                onPress={() => navigation.navigate("MessagingPage", { previousScreen: "ItemDescriptionPage" })}
+>
                 <Text style={styles.buttonText}>Interested</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -75,7 +74,7 @@ export default function ItemDescriptionPage({ route }) {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.footerButton}
-            onPress={() => navigation.navigate("chatPage")}
+            onPress={() => navigation.navigate("MessagingPage",{previousScreen:'itemDescriptionPage'})}
           >
             <Image
               source={require("../assets/messages.png")}

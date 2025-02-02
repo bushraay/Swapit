@@ -7,7 +7,7 @@ import {
   Image,
   TouchableOpacity,
   TextInput,
-  Modal
+  Modal,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
@@ -16,7 +16,7 @@ import axios from "axios";
 
 export default function RecommendationPage() {
   const navigation = useNavigation();
-  const [items, setItems] = useState([]); 
+  const [items, setItems] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
   const [highlightedItem, setHighlightedItem] = useState("");
   const [filteredItems, setFilteredItems] = useState([]); // Filtered items state
@@ -24,12 +24,12 @@ export default function RecommendationPage() {
   const [selectedCategory, setSelectedCategory] = useState("All"); // Default filter is "All"
 
   // Categories for filtering
-  const categories = ["All", "Books", "Electronics", "Stationery", "Accessories"];
+  const categories = ["All", "Books", "Sports", "Electronics", "Stationery", "Accessories"];
 
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await axios.get("http://10.20.5.60:5000/recommendedItems");
+        const response = await axios.get("http://192.168.0.103:5000/recommendedItems");
         if (response.data.status === "Ok") {
           setItems(response.data.data);
           setFilteredItems(response.data.data); // Initially display all items
@@ -41,30 +41,25 @@ export default function RecommendationPage() {
 
     fetchItems();
   }, []);
-  const getMenuItemStyle = (item) => {
-    return highlightedItem === item
-      ? { backgroundColor: "yellow",  borderRadius: 5 }
-      : {};
-  };
-  // Function to filter items by category
+
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
     if (category === "All") {
       setFilteredItems(items);
     } else {
-      setFilteredItems(items.filter(item => item.Category === category));
+      setFilteredItems(items.filter((item) => item.Category === category));
     }
   };
 
-  // Function to search items
   const handleSearch = (query) => {
     setSearchQuery(query);
     if (query.trim() === "") {
       handleCategorySelect(selectedCategory); // Reset filtered list
     } else {
-      const searchResults = items.filter(item =>
-        item.ItemName.toLowerCase().includes(query.toLowerCase()) ||
-        item.Category.toLowerCase().includes(query.toLowerCase())
+      const searchResults = items.filter(
+        (item) =>
+          item.ItemName.toLowerCase().includes(query.toLowerCase()) ||
+          item.Category.toLowerCase().includes(query.toLowerCase())
       );
       setFilteredItems(searchResults);
     }
@@ -73,165 +68,124 @@ export default function RecommendationPage() {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
-        
         {/* Header */}
         <View style={styles.header}>
-                    <TouchableOpacity
-                      onPress={() => setMenuVisible(true)}
-                      style={styles.menuIconContainer}
-                    >
-                      <Icon name="bars" size={25} color="#FFF" />
-                    </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Item Dashboard</Text>
-                  </View>
-
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Search for items..."
-            placeholderTextColor="#777"
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
+          <TouchableOpacity
+            onPress={() => setMenuVisible(true)}
+            style={styles.menuIconContainer}
+          >
+            <Icon name="bars" size={25} color="#FFF" />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Item Dashboard</Text>
         </View>
 
-        {/* Filter Buttons */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterContainer}>
-          {categories.map((category, index) => (
-            <TouchableOpacity
-              key={index}
-              style={[styles.filterButton, selectedCategory === category && styles.selectedFilter]}
-              onPress={() => handleCategorySelect(category)}
-            >
-              <Text style={styles.filterText}>{category}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        {/* Search and Filters */}
+        <View style={styles.content}>
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchBar}
+              placeholder="Search for items..."
+              placeholderTextColor="#777"
+              value={searchQuery}
+              onChangeText={handleSearch}
+            />
+          </View>
 
-        {/* Display Filtered Items */}
-        <ScrollView style={styles.scrollContainer}>
-          {filteredItems.length > 0 ? (
-            filteredItems.map((item, index) => (
-              <View key={index} style={styles.itemCard}>
-                <Image source={{ uri: item.Image }} style={styles.itemImage} />
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemTitle}>{item.ItemName}</Text>
-                  <Text style={styles.itemCategory}>Category: {item.Category}</Text>
-                  <TouchableOpacity
-                    onPress={() => navigation.navigate("ItemDescriptionPage", { item })}
-                  >
-                    <Text style={styles.readMore}>Read More</Text>
-                  </TouchableOpacity>
-                </View>
-              </View>
-            ))
-          ) : (
-            <Text style={styles.noItemsText}>No items available</Text>
-          )}
-        {/* Footer */}
-                <View style={styles.footer}>
-                  <TouchableOpacity
-                    style={styles.footerButton}
-                    onPress={() => navigation.navigate("SkillRecommendationPage")}
-                  >
-                    <Image
-                      source={require("../assets/skills.png")}
-                      style={styles.footerIcon}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.footerButton}
-                    onPress={() => navigation.navigate("RecommendationPage")}
-                  >
-                    <Image
-                      source={require("../assets/items.png")}
-                      style={styles.footerIcon}
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.footerButton}
-                    onPress={() => navigation.navigate("MessagingPage")}
-                  >
-                    <Image
-                      source={require("../assets/messages.png")}
-                      style={styles.footerIcon}
-                    />
-                  </TouchableOpacity>
-        
-                  <TouchableOpacity
-                    style={styles.footerButton}
-                    onPress={() => navigation.navigate("Myprofile")}
-                  >
-                    <Image
-                      source={require("../assets/profile.png")}
-                      style={styles.footerIcon}
-                    />
-                  </TouchableOpacity>
-                </View>
-                    {/* Menu Modal */}
-                <Modal
-                  visible={menuVisible}
-                  transparent={true}
-                  animationType="slide"
-                  onRequestClose={() => setMenuVisible(false)}
-                >
-                  <View style={styles.menuOverlay}>
-                    <View style={styles.menuContainer}>
-                      <TouchableOpacity
-                        onPress={() => setMenuVisible(false)} // Close the menu
-                        style={styles.closeButton}
-                      >
-                        <Text style={styles.closeText}>Close</Text>
-                      </TouchableOpacity>
-                      {/* Menu Items */}
-                      <TouchableOpacity
-                        onPress={() => navigation.navigate("SettingsPage")}
-                        onPressIn={() => setHighlightedItem("Settings")}
-                        onPressOut={() => setHighlightedItem("")}
-                        style={[styles.menuItem, getMenuItemStyle("Settings")]}
-                      >
-                        <Text style={styles.menuItemText}>Settings</Text>
-                      </TouchableOpacity>
-                      
-                      <TouchableOpacity
-                        onPress={() => navigation.navigate("HistoryPage")}
-                        onPressIn={() => setHighlightedItem("History")}
-                        onPressOut={() => setHighlightedItem("")}
-                        style={[styles.menuItem, getMenuItemStyle("History")]}
-                      >
-                        <Text style={styles.menuItemText}>History</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => navigation.navigate("HelpFeedbackPage")}
-                        onPressIn={() => setHighlightedItem("Help and Feedback")}
-                        onPressOut={() => setHighlightedItem("")}
-                        style={[styles.menuItem, getMenuItemStyle("Help and Feedback")]}
-                      >
-                        <Text style={styles.menuItemText}>Help and Feedback</Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        onPress={() => navigation.navigate("LoginPage")}
-                        onPressIn={() => setHighlightedItem("Log Out")}
-                        onPressOut={() => setHighlightedItem("")}
-                        style={[styles.menuItem, getMenuItemStyle("Log Out")]}
-                      >
-                        <Text style={styles.menuItemText}>Log Out</Text>
-                      </TouchableOpacity>
-                    </View>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterContainer}
+          >
+            {categories.map((category, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.filterButton,
+                  selectedCategory === category && styles.selectedFilter,
+                ]}
+                onPress={() => handleCategorySelect(category)}
+              >
+                <Text style={styles.filterText}>{category}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* Display Filtered Items */}
+          <ScrollView style={styles.scrollContainer}>
+            {filteredItems.length > 0 ? (
+              filteredItems.map((item, index) => (
+                <View key={index} style={styles.itemCard}>
+                  <Image source={{ uri: item.Image }} style={styles.itemImage} />
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.itemTitle}>Name: {item.ItemName}</Text>
+                    <Text style={styles.itemCategory}>
+                      Category: {item.Category}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.navigate("ItemDescriptionPage", { item })
+                      }
+                    >
+                      <Text style={styles.readMore}>Read More</Text>
+                    </TouchableOpacity>
                   </View>
-                </Modal>
-                </ScrollView>
-              </SafeAreaView>
-            </SafeAreaProvider>
-          );
- }
+                </View>
+              ))
+            ) : (
+              <Text style={styles.noItemsText}>No items available</Text>
+            )}
+          </ScrollView>
+        </View>
+
+        {/* Sticky Footer */}
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={styles.footerButton}
+            onPress={() => navigation.navigate("SkillRecommendationPage")}
+          >
+            <Image
+              source={require("../assets/skills.png")}
+              style={styles.footerIcon}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.footerButton}
+            onPress={() => navigation.navigate("RecommendationPage")}
+          >
+            <Image
+              source={require("../assets/items.png")}
+              style={styles.footerIcon}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.footerButton}
+            onPress={() => navigation.navigate("MessagingPage")}
+          >
+            <Image
+              source={require("../assets/messages.png")}
+              style={styles.footerIcon}
+            />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.footerButton}
+            onPress={() => navigation.navigate("Myprofile")}
+          >
+            <Image
+              source={require("../assets/profile.png")}
+              style={styles.footerIcon}
+            />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
+  );
+}
+
 // Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFF8E1",
-
   },
   header: {
     flexDirection: "row",
@@ -253,7 +207,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 1000,
   },
   footerButton: {
     alignItems: "center",
@@ -277,34 +230,6 @@ const styles = StyleSheet.create({
     marginVertical: 10,
     paddingHorizontal: 15,
   },
-  
-  menuOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-start",
-  },
-  menuContainer: {
-    backgroundColor: "#FFF",
-    padding: 20,
-    borderRadius: 10,
-    marginTop: 50, // Adjust as needed for better visibility
-    marginHorizontal: 20,
-  },
-  closeButton: {
-    alignSelf: "flex-end",
-    marginBottom: 20,
-    padding: 5,
-  },
-  closeText: {
-    fontSize: 16,
-    color: "#007B7F",
-    fontWeight: "bold",
-  },
-  menuItem: {
-    fontSize: 18,
-    color: "#333",
-    marginVertical: 10,
-  },
   searchBar: {
     flex: 1,
     height: 40,
@@ -316,41 +241,34 @@ const styles = StyleSheet.create({
     borderColor: "#CCC",
   },
   filterContainer: {
-  flexDirection: "row",
-  paddingHorizontal: 4,
-  paddingBottom: 6,
-  marginBottom: 10, // Added margin to create space below the filter buttons
-},
-
+    flexDirection: "row",
+    paddingHorizontal: 4,
+    paddingBottom: 6,
+    marginBottom: 10,
+  },
   filterButton: {
-  paddingVertical: 8, // Increased padding for button height
-  paddingHorizontal: 16, // Adjusted padding for wider buttons
-  backgroundColor: "#ddd",
-  borderRadius: 20, // Ensures oval shape
-  marginRight: 10,
-  justifyContent: "center", // Ensures text is centered vertically
-  alignItems: "center", // Ensures text is centered horizontally
-  minHeight: 36, // Ensures a minimum height for the button
-},
-filterText: {
-  fontSize: 14, // Reduced font size slightly for better fit
-  fontWeight: "bold",
-  color: "#000", // Ensure good contrast for visibility
-},
-
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "#ddd",
+    borderRadius: 20,
+    marginRight: 10,
+    justifyContent: "center",
+    alignItems: "center",
+    minHeight: 36,
+  },
+  filterText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#000",
+  },
   selectedFilter: {
     backgroundColor: "#335c67",
   },
-  // filterText: {
-  //   fontSize: 16, // Increased font size for better readability
-  // fontWeight: "600", // Slightly reduced weight for balance
-  //   color: "#FFF",
-  // },
-  // scrollContainer: {
-  //   flex: 1,
-  //   paddingHorizontal: 1,
-  //   paddingVertical: 1,
-  // },
+  scrollContainer: {
+    // flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
+  },
   itemCard: {
     flexDirection: "row",
     backgroundColor: "#FFFFFF",
@@ -390,13 +308,10 @@ filterText: {
     fontWeight: "bold",
     textDecorationLine: "underline",
   },
-  
-noItemsText: {
-  textAlign: "center",
-  fontSize: 16,
-  color: "#555",
-  marginTop: 20, // Ensure proper spacing from the filter buttons
-},
-
+  noItemsText: {
+    textAlign: "center",
+    fontSize: 16,
+    color: "#555",
+    marginTop: 20,
+  },
 });
-

@@ -1,3 +1,4 @@
+
 import React from "react";
 import {
   StyleSheet,
@@ -33,14 +34,16 @@ export default function ItemDescriptionPage({ route }) {
           <Text style={styles.itemTitle}>{item.ItemName}</Text>
           <Text style={styles.itemCategory}>Owner Name: {item.PersonName}</Text>
           <Text style={styles.itemCategory}>Category: {item.Category}</Text>
+          <Text style={styles.itemCategory}>Condition: {item.Condition}</Text>
           <Text style={styles.itemDescription}>{item.Description}</Text>
 
           {/* Buttons */}
           <View style={styles.buttonContainer}>
           <TouchableOpacity
                 style={styles.notInterestedButton}
-                onPress={() => navigation.navigate("MessagingPage", { previousScreen: "ItemDescriptionPage" })}
->
+                // onPress={() => navigation.navigate("AddItemPage")} //redirect to message page
+                onPress={() => navigation.navigate("MessagePage")}
+              >
                 <Text style={styles.buttonText}>Interested</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -74,7 +77,7 @@ export default function ItemDescriptionPage({ route }) {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.footerButton}
-            onPress={() => navigation.navigate("MessagingPage",{previousScreen:'itemDescriptionPage'})}
+            onPress={() => navigation.navigate("chatPage")}
           >
             <Image
               source={require("../assets/messages.png")}

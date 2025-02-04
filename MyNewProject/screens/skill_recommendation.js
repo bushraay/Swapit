@@ -26,7 +26,7 @@ export default function SkillRecommendationPage() {
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const tutorsResponse = await axios.get("http://192.168.100.174:5000/recommendedTutors");
+        const tutorsResponse = await axios.get("http://10.20.6.22:5000/recommendedTutors");
         if (tutorsResponse.data.status === "Ok") {
           console.log("Fetched Tutors:", tutorsResponse.data.data); // Log fetched data
           setAllRecommendedTutors(tutorsResponse.data.data);

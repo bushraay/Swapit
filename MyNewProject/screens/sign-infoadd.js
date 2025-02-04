@@ -96,7 +96,7 @@ export default function infoaddPage() {
         };
   
         axios
-          .post("http://192.168.100.174:5000/AddSkills", skillsData, { timeout: 10000 })
+          .post("http://10.20.6.22:5000/AddSkills", skillsData, { timeout: 10000 })
           .then((res) => {
             if (res.status === 201) {
               Alert.alert("Success", res.data.message);
@@ -162,7 +162,7 @@ export default function infoaddPage() {
       };
   
       axios
-        .post("http://192.168.100.174:5000/AddSkills", skillsData, { timeout: 10000 })
+        .post("http://10.20.6.22:5000/AddSkills", skillsData, { timeout: 10000 })
         .then((res) => {
           if (res.status === 201) {
             Alert.alert("Success", res.data.message);

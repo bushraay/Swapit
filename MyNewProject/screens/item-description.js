@@ -32,7 +32,7 @@ export default function ItemDescriptionPage({ route }) {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Image source={{ uri: item.Image }} style={styles.itemImage} />
           <Text style={styles.itemTitle}>{item.ItemName}</Text>
-          <Text style={styles.itemCategory}>Owner Name: {item.PersonName}</Text>
+          <Text style={styles.itemCategory}>Owner Name: {item.Name}</Text>
           <Text style={styles.itemCategory}>Category: {item.Category}</Text>
           <Text style={styles.itemCategory}>Condition: {item.Condition}</Text>
           <Text style={styles.itemDescription}>{item.Description}</Text>

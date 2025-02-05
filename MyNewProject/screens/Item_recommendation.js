@@ -29,7 +29,7 @@ export default function RecommendationPage() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await axios.get("http://10.20.6.22:5000/recommendedItems");
+        const response = await axios.get("http://192.168.0.113:5000/recommendedItems");
         if (response.data.status === "Ok") {
           setItems(response.data.data);
           setFilteredItems(response.data.data); // Initially display all items
@@ -44,25 +44,30 @@ export default function RecommendationPage() {
 
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
-    if (category === "All") {
-      setFilteredItems(items);
-    } else {
-      setFilteredItems(items.filter((item) => item.Category === category));
-    }
+    applyFilters(category, searchQuery); // Apply filters when category changes
   };
 
   const handleSearch = (query) => {
     setSearchQuery(query);
-    if (query.trim() === "") {
-      handleCategorySelect(selectedCategory); // Reset filtered list
-    } else {
-      const searchResults = items.filter(
-        (item) =>
-          item.ItemName.toLowerCase().includes(query.toLowerCase()) ||
-          item.Category.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredItems(searchResults);
+    applyFilters(selectedCategory, query); // Apply filters when search query changes
+  };
+
+  const applyFilters = (category, query) => {
+    let filtered = items;
+
+    // Filter by category
+    if (category !== "All") {
+      filtered = filtered.filter((item) => item.Category === category);
     }
+
+    // Filter by search query (only item name)
+    if (query.trim() !== "") {
+      filtered = filtered.filter((item) =>
+        item.ItemName.toLowerCase().includes(query.toLowerCase())
+      );
+    }
+
+    setFilteredItems(filtered);
   };
 
   return (
@@ -265,7 +270,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#335c67",
   },
   scrollContainer: {
-    // flex: 1,
     paddingHorizontal: 10,
     paddingVertical: 10,
   },

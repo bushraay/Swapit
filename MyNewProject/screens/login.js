@@ -33,7 +33,7 @@ const LoginPage = ({ navigation }) => {
     try {
       // First, attempt MongoDB login
       const userData = { email, password };
-      const res = await axios.post('http://10.20.6.22:5000/Login', userData, { timeout: 10000 });
+      const res = await axios.post('http://192.168.0.113:5000/Login', userData, { timeout: 10000 });
 
       if (res.data.status === 'Ok') {
         // If MongoDB login successful, proceed with Firebase login/signup

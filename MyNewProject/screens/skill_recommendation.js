@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Image,
   ScrollView,
+  Modal,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
@@ -17,20 +18,21 @@ export default function SkillRecommendationPage() {
   const navigation = useNavigation();
   const [menuVisible, setMenuVisible] = useState(false);
   const [highlightedItem, setHighlightedItem] = useState("");
-  const [allRecommendedTutors, setAllRecommendedTutors] = useState([]);
-  const [displayedTutors, setDisplayedTutors] = useState([]);
+  const [recommendedTutors, setRecommendedTutors] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [filteredTutors, setFilteredTutors] = useState([]);
+  const [selectedGender, setSelectedGender] = useState("All");
+  const [popupVisible, setPopupVisible] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
 
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const tutorsResponse = await axios.get("http://10.20.6.22:5000/recommendedTutors");
+        const tutorsResponse = await axios.get("http://192.168.0.113:5000/recommendedTutors");
         if (tutorsResponse.data.status === "Ok") {
-          console.log("Fetched Tutors:", tutorsResponse.data.data); // Log fetched data
-          setAllRecommendedTutors(tutorsResponse.data.data);
-          setDisplayedTutors(tutorsResponse.data.data.slice(0, 10));
+          setRecommendedTutors(tutorsResponse.data.data);
+          setFilteredTutors(tutorsResponse.data.data);
         }
       } catch (error) {
         console.error("Error fetching recommendations:", error);
@@ -42,20 +44,45 @@ export default function SkillRecommendationPage() {
 
   const handleSearch = (query) => {
     setSearchQuery(query);
-    if (query.trim() === "") {
-      setIsSearching(false);
-      setSearchResults([]);
-    } else {
-      setIsSearching(true);
-      const normalizedQuery = query.trim().toLowerCase();
-      const filtered = allRecommendedTutors.filter((tutor) => {
-        // Ensure "Skills I Have" exists and is a string
+    applyFilters(query, selectedGender);
+  };
+
+  const handleGenderFilter = (Gender) => {
+    setSelectedGender(Gender);
+    applyFilters(searchQuery, Gender);
+  };
+
+  const applyFilters = (search, Gender) => {
+    let filtered = recommendedTutors;
+
+    // Apply gender filter first
+    if (Gender !== "All") {
+      filtered = filtered.filter(tutor => 
+        tutor.Gender?.toLowerCase() === Gender.toLowerCase()
+      );
+    }
+
+    // Then apply search filter
+    if (search.trim() !== "") {
+      const normalizedQuery = search.trim().toLowerCase();
+      filtered = filtered.filter(tutor => {
         const skills = tutor["Skills I Have"]?.toLowerCase() || "";
         return skills.includes(normalizedQuery);
       });
-      console.log("Search Results:", filtered); // Log search results
-      setSearchResults(filtered);
     }
+
+    setFilteredTutors(filtered);
+  };
+
+  // Rest of the code remains the same...
+  const handleRating = (value) => {
+    setRating(value);
+  };
+
+  const getMenuItemStyle = (item) => {
+    return highlightedItem === item
+      ? { backgroundColor: "yellow", borderRadius: 5 }
+      : {};
   };
 
   const renderTutorCard = (tutor, index) => (
@@ -100,25 +127,34 @@ export default function SkillRecommendationPage() {
             />
           </View>
 
+          <View style={styles.filterContainer}>
+            {["All", "male", "female"].map((Gender) => (
+              <TouchableOpacity
+                key={Gender}
+                style={[
+                  styles.filterButton,
+                  selectedGender === Gender && styles.selectedFilter,
+                ]}
+                onPress={() => handleGenderFilter(Gender)}
+              >
+                <Text style={styles.filterText}>{Gender}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <View style={styles.contentContainer}>
-            {!isSearching ? (
-              <>
-                <Text style={styles.sectionTitle}>Recommended Tutors For You:</Text>
-                <View style={styles.gridContainer}>
-                  {displayedTutors.map((tutor, index) => renderTutorCard(tutor, index))}
-                </View>
-              </>
-            ) : (
-              <View style={styles.gridContainer}>
-                {searchResults.length > 0 ? (
-                  searchResults.map((tutor, index) => renderTutorCard(tutor, index))
-                ) : (
-                  <Text style={styles.noResults}>No tutors found for this skill</Text>
-                )}
-              </View>
-            )}
+            <Text style={styles.sectionTitle}>Recommended Tutors For You:</Text>
+            <View style={styles.gridContainer}>
+              {filteredTutors.length > 0 ? (
+                filteredTutors.map((tutor, index) => renderTutorCard(tutor, index))
+              ) : (
+                <Text style={styles.noResults}>No tutors found matching your criteria</Text>
+              )}
+            </View>
           </View>
         </ScrollView>
+
+        {/* Rest of the component remains the same... */}
         {/* Footer */}
         <View style={styles.footer}>
           <TouchableOpacity
@@ -141,7 +177,7 @@ export default function SkillRecommendationPage() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.footerButton}
-            onPress={() => navigation.navigate("MessagingPage", { previousScreen: 'SkillRecommendationPage' })}
+            onPress={() => navigation.navigate("MessagingPage")}
           >
             <Image
               source={require("../assets/messages.png")}
@@ -159,10 +195,99 @@ export default function SkillRecommendationPage() {
             />
           </TouchableOpacity>
         </View>
+        
+        {/* Menu Modal */}
+    <Modal
+      visible={menuVisible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={() => setMenuVisible(false)}
+    >
+      <View style={styles.menuOverlay}>
+        <View style={styles.menuContainer}>
+          <TouchableOpacity
+            onPress={() => setMenuVisible(false)} // Close the menu
+            style={styles.closeButton}
+          >
+            <Text style={styles.closeText}>Close</Text>
+          </TouchableOpacity>
+          {/* Menu Items */}
+          <TouchableOpacity
+            onPress={() => {
+              setMenuVisible(false); // Close modal
+              navigation.navigate("SettingsPage"); // Navigate to Settings
+            }}
+            style={[styles.menuItem, getMenuItemStyle("Settings")]}
+          >
+            <Text style={styles.menuItemText}>Settings</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              setMenuVisible(false); // Close modal
+              navigation.navigate("HistoryPage"); // Navigate to History
+            }}
+            style={[styles.menuItem, getMenuItemStyle("History")]}
+          >
+            <Text style={styles.menuItemText}>History</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              setMenuVisible(false); // Close modal
+              setPopupVisible(true); // Show popup for Help and Feedback
+            }}
+            style={[styles.menuItem, getMenuItemStyle("Help and Feedback")]}
+          >
+            <Text style={styles.menuItemText}>Review</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => {
+              setMenuVisible(false); // Close modal
+              navigation.navigate("LoginPage"); // Navigate to Login
+            }}
+            style={[styles.menuItem, getMenuItemStyle("Log Out")]}
+          >
+            <Text style={styles.menuItemText}>Log Out</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+    {/* Popup */}
+    {popupVisible && (
+      <View style={styles.popupContainer}>
+        <Text style={styles.popupTitle}>Review</Text>
+        <View style={styles.starContainer}>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <TouchableOpacity key={star} onPress={() => handleRating(star)}>
+              <Icon
+                name="star"
+                size={30}
+                color={star <= rating ? "#FFD700" : "#DDD"}
+              />
+            </TouchableOpacity>
+          ))}
+        </View>
+        <TextInput
+          style={styles.commentBox}
+          placeholder="Share your experience about the user...."
+          value={comment}
+          onChangeText={(text) => setComment(text)}
+        />
+        <TouchableOpacity
+          style={styles.submitButton}
+          onPress={() => {
+            console.log("Rating:", rating, "Comment:", comment);
+            setPopupVisible(false); // Hide popup after submission
+          }}
+        >
+          <Text style={styles.submitText}>Submit</Text>
+        </TouchableOpacity>
+      </View>
+    )}
       </SafeAreaView>
     </SafeAreaProvider>
   );
 }
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -173,7 +298,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "flex-start",
     padding: 15,
-    backgroundColor: "#335c67", 
+    backgroundColor: "#335c67",
   },
   menuIconContainer: {
     marginRight: 15,
@@ -261,4 +386,72 @@ const styles = StyleSheet.create({
     height: 30,
     tintColor: "#FFFFFF",
   },
+  filterContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 10,
+    justifyContent: "space-evenly",
+  },
+  filterButton: {
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: 5,
+    borderColor: "#CCC",
+  },
+  selectedFilter: {
+    backgroundColor: "#007B7F",
+    borderColor: "#007B7F",
+  },
+  filterText: {
+    color: "#FFF",
+  },
+  noResults: {
+    textAlign: "center",
+    color: "#777",
+    fontSize: 16,
+    marginTop: 20,
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-start",
+  },
+  menuContainer: {
+    backgroundColor: "#FFF",
+    padding: 20,
+    borderRadius: 10,
+    marginTop: 50, // Adjust as needed for better visibility
+    marginHorizontal: 20,
+  },
+  closeButton: {
+    alignSelf: "flex-end",
+    marginBottom: 20,
+    padding: 5,
+  },
+  closeText: {
+    fontSize: 16,
+    color: "#007B7F",
+    fontWeight: "bold",
+  },
+  menuItem: {
+    fontSize: 18,
+    color: "#333",
+    marginVertical: 10,
+  },
+  filterButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "#ddd",
+    borderRadius: 20,
+    marginHorizontal: 5,
+  },
+  selectedFilter: {
+    backgroundColor: "#007B7F",
+  },
+  filterText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#FFF",
+  },
+
 });

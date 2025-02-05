@@ -77,6 +77,36 @@ app.post('/CreateAccount', async (req, res) => {
    }
 });
 
+// Add to your backend routes
+app.post('/get-user-by-fullname', async (req, res) => {
+   try {
+     const { fullName } = req.body; // Expecting fullName in the request body
+ 
+     // Check if fullName is provided
+     if (!fullName) {
+       return res.status(400).json({ error: "Full name is required" });
+     }
+ 
+     // Find user by concatenated first + last name
+     const user = await User.findOne({ 
+       $expr: { 
+         $eq: [
+           { $concat: ["$f_name", " ", "$l_name"] },
+           fullName
+         ]
+       }
+     });
+ 
+     if (!user) {
+       return res.status(404).json({ error: "User  not found" });
+     }
+ 
+     res.json({ email: user.email });
+   } catch (error) {
+     console.error("Error fetching user by full name:", error);
+     res.status(500).json({ error: "Internal server error" });
+   }
+ });
 // Add skills
 app.post("/AddSkills", async (req, res) => {
    try {

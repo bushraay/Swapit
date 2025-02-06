@@ -13,7 +13,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import axios from 'axios';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth, database } from "F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js"; 
+import { auth, database } from "C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js"; 
 import { doc, setDoc } from 'firebase/firestore';
 
 export default function CreateAccountPage({ navigation }) {
@@ -80,7 +80,7 @@ export default function CreateAccountPage({ navigation }) {
   const checkEmailExists = async (email) => {
     try {
       // Check MongoDB
-      const mongoResponse = await axios.post('http://10.20.4.53:5000/check-email', { 
+      const mongoResponse = await axios.post('http://10.20.5.46/check-email', { 
         email 
       });
       const mongoExists = mongoResponse.data.exists;
@@ -123,7 +123,7 @@ export default function CreateAccountPage({ navigation }) {
         password: password,
       };
   
-      const res = await axios.post("http://10.20.4.223:5000/CreateAccount", userData, {
+      const res = await axios.post("http://10.20.5.46:5000/CreateAccount", userData, {
         timeout: 20000,
       });
   
@@ -136,10 +136,10 @@ export default function CreateAccountPage({ navigation }) {
           await AsyncStorage.setItem("userAge", userData.age.toString());
   
           Alert.alert("Success", "Account created successfully!");
-          navigation.navigate("infoaddPage");
+          navigation.navigate("InfoAddPage");
         } else {
           Alert.alert("Warning", "Account created but messaging setup incomplete.");
-          navigation.navigate("infoaddPage");
+          navigation.navigate("InfoAddPage");
         }
       } else {
         Alert.alert(JSON.stringify(res.data));
@@ -169,7 +169,7 @@ export default function CreateAccountPage({ navigation }) {
   //   Alert.alert("Success", "Account created successfully!");
   //   console.log("success");
     
-  //   navigation.navigate("infoaddPage");
+  //   navigation.navigate("InfoAddPage");
   // };
 
   return (

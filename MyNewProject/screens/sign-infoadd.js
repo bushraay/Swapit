@@ -17,7 +17,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 // import LinearGradient from "react-native-linear-gradient";
 
-export default function infoaddPage() {
+export default function InfoAddPage() {
   const navigation = useNavigation();
   const [portfolioFileName, setPortfolioFileName] = useState("");
   const [skillsHave, setSkillsHave] = useState("");
@@ -96,7 +96,7 @@ export default function infoaddPage() {
         };
   
         axios
-          .post("http://10.20.4.223:5000/AddSkills", skillsData, { timeout: 10000 })
+          .post("http://10.20.5.46:5000/AddSkills", skillsData, { timeout: 10000 })
           .then((res) => {
             if (res.status === 201) {
               Alert.alert("Success", res.data.message);

@@ -1,18 +1,58 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
-  Image,
   ScrollView,
+  Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons"; // Import the icon set
+import axios from "axios";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function Myprofile() {
   const navigation = useNavigation();
+
+  // States to store user profile data
+  const [userData, setUserData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        // Get the email from AsyncStorage
+        const email = await AsyncStorage.getItem('userEmail');
+
+        if (!email) {
+          setError("Email not found. Please log in.");
+          setLoading(false);
+          return;
+        }
+
+        // Fetch the user profile using the email
+        const response = await axios.get(`http://10.20.5.46:5000/getUserProfileByEmail?email=${email}`);
+        setUserData(response.data.data);  // Assuming the API returns the user data inside `data`
+      } catch (err) {
+        setError("Error fetching user profile");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  if (loading) {
+    return <Text>Loading...</Text>;
+  }
+
+  if (error) {
+    return <Text>{error}</Text>;
+  }
 
   return (
     <SafeAreaProvider>
@@ -29,20 +69,27 @@ export default function Myprofile() {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Profile Card */}
           <View style={styles.profileCard}>
-          <View style={styles.profileImageContainer}>
-                <Ionicons name="person-circle" size={100} color="#777" style={styles.profileIcon} />
-                </View>
-             {/* Pencil Icon for Edit */}
-                <TouchableOpacity
-                    style={styles.editIcon}
-                    onPress={() => navigation.navigate("Editprofile")}
-                >
-                    <Ionicons name="pencil" size={18} color="#FFF" />
-                </TouchableOpacity>
-            <Text style={styles.profileName}>Ahmed Zohaib</Text>
+            <View style={styles.profileImageContainer}>
+              <Ionicons
+                name="person-circle"
+                size={100}
+                color="#777"
+                style={styles.profileIcon}
+              />
+            </View>
+            {/* Pencil Icon for Edit */}
+            <TouchableOpacity
+              style={styles.editIcon}
+              onPress={() => navigation.navigate("Editprofile")}
+            >
+              <Ionicons name="pencil" size={18} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={styles.profileName}>{userData.Name}</Text>
             <View style={styles.profileDetailsContainer}>
-                <Text style={styles.profileDetails}>Habib University</Text>
-                <Text style={styles.profileAvailability}>Availability: Friday, Saturday</Text>
+              <Text style={styles.profileDetails}>{userData.university}</Text>
+              <Text style={styles.profileAvailability}>
+                Availability: {userData.Availability}
+              </Text>
             </View>
 
             {/* Rating */}
@@ -52,7 +99,6 @@ export default function Myprofile() {
                 .map((_, index) => (
                   <Image
                     key={index}
-                    // source={require("../assets/star-outline.png")} // Replace with your star icon asset
                     style={styles.ratingIcon}
                   />
                 ))}
@@ -62,15 +108,13 @@ export default function Myprofile() {
           {/* Skills Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>My Skills:</Text>
-            <Text style={styles.sectionContent}>• Web Developer</Text>
-            <Text style={styles.sectionContent}>• Figma</Text>
+            <Text style={styles.sectionContent}>{userData["Skills I Have"]}</Text>
           </View>
 
           {/* Learning Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Looking to Learn:</Text>
-            <Text style={styles.sectionContent}>• Guitar</Text>
-            <Text style={styles.sectionContent}>• Piano</Text>
+            <Text style={styles.sectionContent}>{userData["Skills I Want"]}</Text>
           </View>
 
           {/* Reviews Section */}
@@ -85,13 +129,13 @@ export default function Myprofile() {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => navigation.navigate("infoaddPage")} // Adjust navigation target
+              onPress={() => navigation.navigate("infoaddPage")}
             >
               <Text style={styles.buttonText}>Add Skill</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => navigation.navigate("AddItemPage")} // Adjust navigation target
+              onPress={() => navigation.navigate("AddItemPage")}
             >
               <Text style={styles.buttonText}>Add Item</Text>
             </TouchableOpacity>
@@ -141,146 +185,29 @@ export default function Myprofile() {
     </SafeAreaProvider>
   );
 }
-
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#FFF8E1",
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 15,
-    backgroundColor: "#335c67",
-  },
-  editIcon: {
-  position: "absolute",
-  top: 10,
-  right: 10,
-  backgroundColor: "#335c67",
-  padding: 6,
-  borderRadius: 12,
-  elevation: 3,
-},
-
-  backArrow: {
-    fontSize: 20,
-    color: "#FFF",
-    marginRight: 10,
-  },
-  headerTitle: {
-    fontSize: 18,
-    color: "#FFF",
-    fontWeight: "bold",
-  },
-  scrollContent: {
-    paddingTop: 20,
-    paddingHorizontal: 20,
-    paddingBottom: 200,
-  },
-  profileCard: {
-    alignItems: "center",
-    backgroundColor: "#FFF8E1",
-    padding: 20,
-    borderRadius: 10,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
-  },
-  profileImageContainer: {
-    marginBottom: 10,
-  },
-  profileImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-  },
-  profileName: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginBottom: 5,
-    color: "#333",
-  },
-  profileDetails: {
-    fontSize: 14,
-    color: "#777",
-    marginBottom: 15,
-  },
-  profileDetailsContainer: {
-  alignItems: "center",
-  marginBottom: 15,
-},
-profileAvailability: {
-  fontSize: 14,
-  color: "#777",
-  marginTop: 5,
-},
-
-  ratingContainer: {
-    flexDirection: "row",
-    marginBottom: 10,
-  },
-  ratingIcon: {
-    width: 20,
-    height: 20,
-    marginHorizontal: 2,
-  },
-  section: {
-    backgroundColor: "#FFF8E1",
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 15,
-    shadowColor: "#000",
-    shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 5,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 5,
-    color: "#333",
-  },
-  sectionContent: {
-    fontSize: 14,
-    color: "#555",
-  },
-  buttonContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-  },
-  actionButton: {
-    flex: 1,
-    backgroundColor: "#FFB343",
-    paddingVertical: 10,
-    borderRadius: 5,
-    marginHorizontal: 5,
-    alignItems: "center",
-  },
-  buttonText: {
-    color: "#FFF",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-  footer: {
-    height: 70,
-    backgroundColor: "#335c67",
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  footerButton: {
-    alignItems: "center",
-  },
-  footerIcon: {
-    width: 30,
-    height: 30,
-    tintColor: "#FFF",
-  },
+  container: { flex: 1, backgroundColor: "#FFF8E1" },
+  header: { flexDirection: "row", alignItems: "center", padding: 15, backgroundColor: "#335c67" },
+  backArrow: { fontSize: 20, color: "#FFF", marginRight: 10 },
+  headerTitle: { fontSize: 18, color: "#FFF", fontWeight: "bold" },
+  scrollContent: { paddingTop: 20, paddingHorizontal: 20, paddingBottom: 200 },
+  profileCard: { alignItems: "center", backgroundColor: "#FFF", padding: 20, borderRadius: 10, marginBottom: 20 },
+  profileImageContainer: { marginBottom: 10 },
+  profileIcon: { width: 100, height: 100, borderRadius: 50 },
+  editIcon: { position: "absolute", top: 10, right: 10, backgroundColor: "#335c67", padding: 6, borderRadius: 12 },
+  profileName: { fontSize: 20, fontWeight: "bold", marginBottom: 5, color: "#333" },
+  profileDetailsContainer: { alignItems: "center", marginBottom: 15 },
+  profileDetails: { fontSize: 14, color: "#777" },
+  profileAvailability: { fontSize: 14, color: "#777" },
+  ratingContainer: { flexDirection: "row", marginBottom: 10 },
+  ratingIcon: { width: 20, height: 20, marginHorizontal: 2 },
+  section: { backgroundColor: "#FFF8E1", borderRadius: 10, padding: 15, marginBottom: 15 },
+  sectionTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 5, color: "#333" },
+  sectionContent: { fontSize: 14, color: "#555" },
+  buttonContainer: { flexDirection: "row", justifyContent: "space-between" },
+  actionButton: { flex: 1, backgroundColor: "#FFB343", paddingVertical: 10, borderRadius: 5, marginHorizontal: 5, alignItems: "center" },
+  buttonText: { color: "#FFF", fontSize: 16, fontWeight: "bold" },
+  footer: { height: 70, backgroundColor: "#335c67", flexDirection: "row", justifyContent: "space-around", alignItems: "center", position: "absolute", bottom: 0, left: 0, right: 0 },
+  footerButton: { alignItems: "center" },
+  footerIcon: { width: 30, height: 30, tintColor: "#FFF" },
 });

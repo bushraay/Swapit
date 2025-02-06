@@ -1,14 +1,19 @@
-
-
 import React, { useState } from "react";
 import {
-  View, Text, TextInput, TouchableOpacity, StyleSheet, Image, Alert,
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js"; 
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js";
+
 const LoginPage = ({ navigation }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,22 +34,31 @@ const LoginPage = ({ navigation }) => {
       Alert.alert("Please fill in both email and password!");
       return;
     }
-
+  
     try {
-      // First, attempt MongoDB login
+      // Attempt MongoDB login
       const userData = { email, password };
-      const res = await axios.post('http://10.20.4.223:5000/Login', userData, { timeout: 10000 });
-
-      if (res.data.status === 'Ok') {
-        // If MongoDB login successful, proceed with Firebase login/signup
+      const res = await axios.post(
+        "http://10.20.5.46:5000/Login",
+        userData,
+        { timeout: 10000 }
+      );
+  
+      if (res.data.status === "Ok") {
+        // Extract user_id from the response
+        const user_id = res.data.data.user_id; // Ensure this matches your backend response
+        const token = res.data.data.token;
+        const userEmail = email;
+  
+        // If MongoDB login is successful, proceed with Firebase login
         const firebaseSuccess = await handleFirebaseLogin();
-        
+  
         if (firebaseSuccess) {
           // Both logins successful
           await AsyncStorage.setItem("isLoggedIn", "true");
-          await AsyncStorage.setItem("token", res.data.data);
-          await AsyncStorage.setItem('isLoggedIn', JSON.stringify(true));
-          
+          await AsyncStorage.setItem("token", token);
+          await AsyncStorage.setItem("userEmail", userEmail);
+  
           Alert.alert("Logged In Successfully!");
           navigation.navigate("SkillRecommendationPage");
         } else {
@@ -93,17 +107,16 @@ const LoginPage = ({ navigation }) => {
           <Text style={styles.buttonText}>Login</Text>
         </TouchableOpacity>
         <Text style={styles.signupText}>
-            Not a member?{' '}
+          Not a member?{" "}
           <Text
-                  style={styles.signupLink}
-                  onPress={() => navigation.navigate('CreateAccountPage')}
+            style={styles.signupLink}
+            onPress={() => navigation.navigate("CreateAccountPage")}
           >
-                  Sign up!
+            Sign up!
           </Text>
-          </Text>
+        </Text>
       </View>
 
-      
       {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>© 2024 MyApp. All rights reserved.</Text>
@@ -145,7 +158,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 20,
-    // backgroundColor: "#F5F5F5",
   },
   input: {
     width: "100%",
@@ -167,14 +179,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   signupText: {
-   marginTop: 20,
-  color: '#335c67',
-  fontWeight: 'bold',
- },
- signupLink: {
-   color: '#FFB343',
-   fontWeight: 'bold',
- },
+    marginTop: 20,
+    color: "#335c67",
+    fontWeight: "bold",
+  },
+  signupLink: {
+    color: "#FFB343",
+    fontWeight: "bold",
+  },
   footer: {
     height: 70,
     backgroundColor: "#335c67",

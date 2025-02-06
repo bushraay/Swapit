@@ -10,6 +10,13 @@ const UserDetailSchema = new mongoose.Schema({
     university: String,
     username: { type: String, unique: true },
     password: { type: String, required: true },
+    user_id: Number, // From Skills collection
+    user_name: String,
+    gender: String,
+    skills_i_want: String,
+    skills_i_have: String,
+    availability: String,
+    image: String,
     // re_password: String,
 
 },{
@@ -17,3 +24,4 @@ const UserDetailSchema = new mongoose.Schema({
 
 });
 mongoose.model("UserInfo", UserDetailSchema);
+

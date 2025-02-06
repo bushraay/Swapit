@@ -23,9 +23,12 @@ mongoose.connect(mongoUri)
 
 require('./UserDetail');
 require('./skills');
+require('./UserDetailed');
 
 const User = mongoose.model("UserInfo");
 const Skills = mongoose.model("Skills");
+const MergedUser = mongoose.model( "MergedUser");
+
 const JWT_SECRET = "hdidjnfbjsakjdhdiksmnhcujiksjieowpqlaskjdsolwopqpowidjxmmxm";
 
 // Root route
@@ -42,15 +45,197 @@ app.post('/check-email', async (req, res) => {
      res.status(500).json({ error: "Internal server error" });
    }
  });
- let nextUserId = 600;
+
+
+//  let nextUserId = 600;
+// app.get('/getUserProfile', async (req, res) => {
+//    try {
+//       const { user_id } = req.query;
+
+//       if (!user_id) {
+//          return res.status(400).json({ message: "first name is required" });
+//       }
+
+//       // Find the user in the database using email_y
+//       const user = await UserDetailed.findOne({ user_id });
+
+//       if (!user) {
+//          return res.status(404).json({ message: "User not found" });
+//       }
+
+//       res.status(200).json({
+//          status: "Ok",
+//          data: {
+//             user_id: user.user_id,
+//             f_name: user.f_name,
+//             l_name: user.l_name,
+//             email: user.email_y,  // Fixing email field
+//             age: user.age,
+//             university: user.university,
+//             user_name: user.user_name || "Not Set", // Handle undefined
+//             gender: user.gender || "Not Specified",
+//             skills_i_have: user.skills_i_have || "Not Set",
+//             skills_i_want: user.skills_i_want || "Not Set",
+//             availability: user.availability || "Not Set",
+//             image: user.image || "No Image"
+//          }
+//       });
+
+//    } catch (error) {
+//       console.error("Error fetching user profile:", error);
+//       res.status(500).json({ message: "Internal server error" });
+//    }
+// });
+
+// API to get user by email
+app.get('/getUserProfileByEmail', async (req, res) => {
+   try {
+      const { email } = req.query;
+
+      if (!email) {
+         return res.status(400).json({ message: "Email is required" });
+      }
+
+      const user = await User.findOne({ email });
+
+      if (!user) {
+         return res.status(404).json({ message: "User not found" });
+      }
+
+      res.status(200).json({
+         status: "Ok",
+         data: user
+      });
+
+   } catch (error) {
+      console.error("Error fetching user profile:", error);
+      res.status(500).json({ message: "Internal server error" });
+   }
+});
+
+
+// bipartite
+
+// Function to perform bipartite matching
+const bipartiteMatch = (users) => {
+   let matches = [];
+ 
+   users.forEach((user1) => {
+     const [skillsHave, skillsWant] = user1.skills;
+ 
+     users.forEach((user2) => {
+       if (user1.user_id !== user2.user_id) {
+         const [skillsHave2, skillsWant2] = user2.skills;
+         
+         // If user1 wants skill that user2 has, it's a match
+         if (skillsWant.some(skill => skillsHave2.includes(skill)) && skillsWant2.some(skill => skillsHave.includes(skill))) {
+           matches.push({ user1: user1.user_id, user2: user2.user_id });
+         }
+       }
+     });
+   });
+ 
+   return matches;
+ };
+ 
+ // Endpoint to fetch user preferences and apply bipartite matching
+ app.get("/userPreferences", async (req, res) => {
+   try {
+     const users = await MergedUser.find();
+     const userPreferences = users.map((user) => {
+       const skillsHave = user.skills_i_have ? user.skills_i_have.split(',') : [];
+       const skillsWant = user.skills_i_want ? user.skills_i_want.split(',') : [];
+       
+       return {
+         user_id: user.user_id,
+         skills: [skillsHave, skillsWant]
+       };
+     });
+ 
+     const matches = bipartiteMatch(userPreferences);
+     res.json({ userPreferences, matches });
+   } catch (err) {
+     res.status(500).json({ error: err.message });
+   }
+ });
+ 
+
+// //user id se
+// app.get('/getUserProfile', async (req, res) => {
+//    try {
+//       const { user_id } = req.query;
+
+//       if (!user_id ) {
+//          return res.status(400).json({ message: "User ID is required" });
+//       }
+
+//       const user = await MergedUser.findOne({user_id});
+      
+//       // Search by user_id if provided, otherwise search by email
+      
+
+//       if (!user) {
+//          return res.status(404).json({ message: "User not found" });
+//       }
+
+//       res.status(200).json({
+//          status: "Ok",
+//          data: user
+//       });
+
+//    } catch (error) {
+//       console.error("Error fetching user profile:", error);
+//       res.status(500).json({ message: "Internal server error" });
+//    }
+// });
+
+
+
+//  app.get('/getUserProfile', async (req, res) => {
+//    try {
+//       const { email } = req.query;
+
+//       if (!email) {
+//          return res.status(400).json({ message: "Email is required" });
+//       }
+
+//       // Find the user in the database
+//       const user = await UserDetailed.findOne({ email });
+
+//       if (!user) {
+//          return res.status(404).json({ message: "User not found" });
+//       }
+
+      
+//       res.status(200).json({
+//          status: "Ok",
+//          data: {
+//             f_name: user.f_name,
+//             l_name: user.l_name,
+//             email: user.email,
+//             age: user.age,
+//             university: user.university,
+//             user_name: user.user_name,
+//             skills_i_have: skills ? skills.skills_i_have : [],
+//             skills_i_want: skills ? skills.skills_i_want : [],
+//             availability: skills ? skills.availability : "Not Set",
+//          }
+//       });
+
+//    } catch (error) {
+//       console.error("Error fetching user profile:", error);
+//       res.status(500).json({ message: "Internal server error" });
+//    }
+// });
+
 
 // Create account
 app.post('/CreateAccount', async (req, res) => {
    try {
-      const { f_name, l_name, email, age, university, user_name, password } = req.body;
+      const { f_name, l_name, email, age, university, user_name, password, gender, user_id,  skills_i_want, skills_i_have,availability } = req.body;
 
       // Validate required fields
-      if (!f_name || !l_name || !email || !age || !university || !user_name || !password) {
+      if (!f_name || !l_name || !email || !age || !university || !user_name || !password ) {
          return res.status(400).json({ message: "All fields are required" });
       }
 
@@ -70,9 +255,15 @@ app.post('/CreateAccount', async (req, res) => {
          email,
          age,
          university,
-         user_name,
          password: encryptedPassword,
-      });
+       // From Skills collection
+         user_name,
+         user_id,
+         gender,
+         skills_i_want,
+         skills_i_have,
+         availability
+            });
 
       res.status(201).json({ message: "User created successfully", data: newUser });
    } catch (error) {
@@ -84,39 +275,37 @@ app.post('/CreateAccount', async (req, res) => {
 // Add skills
 app.post("/AddSkills", async (req, res) => {
    try {
-      const { email, name, age, skills_i_have, category_skills_i_have } = req.body;
-      console.log("1. Request received:", req.body); // Log incoming request
-      
+       const { email, skills_i_have, skills_i_want, availability } = req.body;
 
-      if (!email || !skills_i_have || !category_skills_i_have) {
-         console.error("2. Missing fields:", req.body); // Log missing fields
-         return res.status(400).json({ message: "Missing required fields." });
-      }
+       console.log("Request Body:", req.body); // Log received data
 
-      const user = await User.findOne({ email });
-      if (!user) {
-         console.error("3. User not found for email:", email); // Log email issue
-         return res.status(404).json({ message: "User not found." });
-      }
-      console.log("4. User found:", user);
+       // Validate input
+       if (!email || !skills_i_have || !skills_i_want || !Array.isArray(skills_i_have) || !Array.isArray(skills_i_want)) {
+           console.error("Invalid input:", req.body);
+           return res.status(400).json({ message: "Invalid input format." });
+       }
 
-      const newSkill = await Skills.create({
-         user_id: user._id,
-         name,
-         age,
-         skills_i_have,
-         category_skills_i_have,
-         skills_i_want: req.body.skills_i_want || "",
-         category_skills_i_want: req.body.category_skills_i_want || "",
-         availability: req.body.availability || "",
-         email: user.email, 
-      });
-      console.log("5. New skill created:", newSkill);
+       // Check if user exists
+       const user = await User.findOne({ email });
+       if (!user) {
+           console.error("User not found for email:", email);
+           return res.status(404).json({ message: "User not found." });
+       }
 
-      res.status(201).json({ message: "Skills added successfully", data: newSkill });
+       // Create new skill entry
+       const newSkill = await Skills.create({
+           user_id: user._id,
+           skills_i_have,
+           skills_i_want,
+           availability: availability || "",
+           email: user.email,
+       });
+
+       console.log("New skill added:", newSkill);
+       res.status(201).json({ message: "Skills added successfully", data: newSkill });
    } catch (error) {
-      console.error("6. Error adding skills:", error.message, error.stack); // Log full error details
-      res.status(500).json({ message: "Internal server error" });
+       console.error("Error in /AddSkills endpoint:", error);
+       res.status(500).json({ message: "Internal server error" });
    }
 });
 
@@ -146,20 +335,23 @@ app.post('/Login', async (req, res) => {
    }
 });
 
-// Fetch user data
-app.post('/userdata', async (req, res) => {
-   const { token } = req.body;
-   try {
-      const user = jwt.verify(token, JWT_SECRET);
-      const useremail = user.email;
+// // Fetch user data
+// app.post('/userdata', async (req, res) => {
+//    const { token } = req.body;
+//    try {
+//       const user = jwt.verify(token, JWT_SECRET);
+//       const useremail = user.email;
 
-      User.findOne({ email: useremail }).then((data) => {
-         return res.send({ status: "Ok", data: data });
-      });
-   } catch (error) {
-      return res.send({ error: "error" });
-   }
-});
+//       User.findOne({ email: useremail }).then((data) => {
+//          return res.send({ status: "Ok", data: data });
+//       });
+//    } catch (error) {
+//       return res.send({ error: "error" });
+//    }
+// });
+
+//get user profile data
+
 
 // Fetch recommended tutors
 app.get("/recommendedTutors", async (req, res) => {

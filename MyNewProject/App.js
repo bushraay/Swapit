@@ -19,7 +19,7 @@ import UserReviewPage from './screens/User_review';
 import GetStartedPage from './screens/main_screen';
 import LoginPage from './screens/login';
 import CreateAccountPage from './screens/sign-up';
-import infoaddPage from './screens/sign-infoadd';
+import InfoAddPage from './screens/sign-infoadd';
 import Editprofile from './screens/edit_profile';
 import Myprofile from './screens/my_profile';
 import {MessagingApp} from './react-native-chat/App'; // Import chat app
@@ -37,7 +37,7 @@ Notifications.setNotificationHandler({
 });
 
 const Stack = createStackNavigator();
-const API_URL = 'http://10.20.4.223:5000'; // Update this to your server URL
+const API_URL = 'http://10.20.5.46:5000'; // Update this to your server URL
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -87,7 +87,7 @@ export default function App() {
         <Stack.Screen name="GetStartedPage" component={GetStartedPage} options={{ headerShown: false }} />
         <Stack.Screen name="LoginPage" component={LoginPage} options={{ headerShown: false }} />
         <Stack.Screen name="CreateAccountPage" component={CreateAccountPage} options={{ headerShown: false }} />
-        <Stack.Screen name="infoaddPage" component={infoaddPage} options={{ headerShown: false }} />
+        <Stack.Screen name="InfoAddPage" component={InfoAddPage} options={{ headerShown: false }} />
         <Stack.Screen name="Myprofile" component={Myprofile} options={{ headerShown: false }} />
         <Stack.Screen name="Editprofile" component={Editprofile} options={{ headerShown: false }} />
         <Stack.Screen name="RecommendationPage" component={RecommendationPage} options={{ headerShown: false }} />

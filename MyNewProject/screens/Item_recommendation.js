@@ -29,7 +29,7 @@ export default function RecommendationPage() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await axios.get("http://192.168.0.103:5000/recommendedItems");
+        const response = await axios.get("http://192.168.0.113:5000/recommendedItems");
         if (response.data.status === "Ok") {
           setItems(response.data.data);
           setFilteredItems(response.data.data); // Initially display all items
@@ -41,75 +41,33 @@ export default function RecommendationPage() {
 
     fetchItems();
   }, []);
-  
-  const handleSearch = async (query) => {
-    setSearchQuery(query);
-    
-    if (query.trim() === "") {
-      setIsSearching(false);
-      // Fetch recommended items again when search is cleared
-      try {
-        const response = await axios.get("http://10.20.5.46:5000/recommendedItems");
-        if (response.data.status === "Ok") {
-          setItems(response.data.data);
-        }
-      } catch (error) {
-        console.error("Error fetching items:", error);
-      }
-    } else {
-      setIsSearching(true);
-      try {
-        const response = await axios.get(`http://10.20.5.46:5000/searchItems?query=${encodeURIComponent(query)}`);
-        if (response.data.status === "Ok") {
-          setItems(response.data.data);
-        }
-      } catch (error) {
-        console.error("Error searching items:", error);
-      }
-      const searchTerms = query.toLowerCase().split(" ");
-      
-      // Score-based search across multiple attributes
-      const scoredResults = items.map(item => {
-        let score = 0;
-        const matchTerms = (text, weight) => {
-          if (!text) return 0;
-          return searchTerms.reduce((acc, term) => {
-            return acc + (text.toLowerCase().includes(term) ? weight : 0);
-          }, 0);
-        };
 
-        // Weighted scoring based on priority
-        score += matchTerms(item.ItemName, 5);    // Highest priority
-        score += matchTerms(item.PersonName, 4);
-        score += matchTerms(item.Category, 3);
-        score += matchTerms(item.Condition, 2);
-        score += matchTerms(item.Description, 1);  // Lowest priority
-
-        return { item, score };
-      });
-
-      // Filter items with any matches and sort by score
-      const filteredResults = scoredResults
-        .filter(result => result.score > 0)
-        .sort((a, b) => b.score - a.score)
-        .map(result => result.item);
-
-      setSearchResults(filteredResults);
-    }
+  const handleCategorySelect = (category) => {
+    setSelectedCategory(category);
+    applyFilters(category, searchQuery); // Apply filters when category changes
   };
 
   const handleSearch = (query) => {
     setSearchQuery(query);
-    if (query.trim() === "") {
-      handleCategorySelect(selectedCategory); // Reset filtered list
-    } else {
-      const searchResults = items.filter(
-        (item) =>
-          item.ItemName.toLowerCase().includes(query.toLowerCase()) ||
-          item.Category.toLowerCase().includes(query.toLowerCase())
-      );
-      setFilteredItems(searchResults);
+    applyFilters(selectedCategory, query); // Apply filters when search query changes
+  };
+
+  const applyFilters = (category, query) => {
+    let filtered = items;
+
+    // Filter by category
+    if (category !== "All") {
+      filtered = filtered.filter((item) => item.Category === category);
     }
+
+    // Filter by search query (only item name)
+    if (query.trim() !== "") {
+      filtered = filtered.filter((item) =>
+        item.ItemName.toLowerCase().includes(query.toLowerCase())
+      );
+    }
+
+    setFilteredItems(filtered);
   };
 
   return (
@@ -312,7 +270,6 @@ const styles = StyleSheet.create({
     backgroundColor: "#335c67",
   },
   scrollContainer: {
-    // flex: 1,
     paddingHorizontal: 10,
     paddingVertical: 10,
   },

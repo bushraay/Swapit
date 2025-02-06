@@ -20,22 +20,19 @@ export default function SkillRecommendationPage() {
   const [highlightedItem, setHighlightedItem] = useState("");
   const [recommendedTutors, setRecommendedTutors] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
   const [filteredTutors, setFilteredTutors] = useState([]);
   const [selectedGender, setSelectedGender] = useState("All");
-  const [popupVisible, setPopupVisible] = useState(false); // State for popup visibility
-  const [rating, setRating] = useState(0); // Star rating state
-  const [comment, setComment] = useState(""); // Comment state
-  
+  const [popupVisible, setPopupVisible] = useState(false);
+  const [rating, setRating] = useState(0);
+  const [comment, setComment] = useState("");
 
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const tutorsResponse = await axios.get("http://10.20.5.46:5000/recommendedTutors");
+        const tutorsResponse = await axios.get("http://192.168.0.113:5000/recommendedTutors");
         if (tutorsResponse.data.status === "Ok") {
           setRecommendedTutors(tutorsResponse.data.data);
-          setFilteredTutors(tutorsResponse.data.data); // Display all tutors initially
+          setFilteredTutors(tutorsResponse.data.data);
         }
       } catch (error) {
         console.error("Error fetching recommendations:", error);
@@ -47,16 +44,45 @@ export default function SkillRecommendationPage() {
 
   const handleSearch = (query) => {
     setSearchQuery(query);
-    if (query.trim() === "") {
-      setIsSearching(false);
-      setSearchResults([]);
-    } else {
-      setIsSearching(true);
-      const filtered = filteredTutors.filter((tutor) =>
-        tutor["Skills I Have"].toLowerCase().includes(query.toLowerCase())
+    applyFilters(query, selectedGender);
+  };
+
+  const handleGenderFilter = (Gender) => {
+    setSelectedGender(Gender);
+    applyFilters(searchQuery, Gender);
+  };
+
+  const applyFilters = (search, Gender) => {
+    let filtered = recommendedTutors;
+
+    // Apply gender filter first
+    if (Gender !== "All") {
+      filtered = filtered.filter(tutor => 
+        tutor.Gender?.toLowerCase() === Gender.toLowerCase()
       );
-      setSearchResults(filtered);
     }
+
+    // Then apply search filter
+    if (search.trim() !== "") {
+      const normalizedQuery = search.trim().toLowerCase();
+      filtered = filtered.filter(tutor => {
+        const skills = tutor["Skills I Have"]?.toLowerCase() || "";
+        return skills.includes(normalizedQuery);
+      });
+    }
+
+    setFilteredTutors(filtered);
+  };
+
+  // Rest of the code remains the same...
+  const handleRating = (value) => {
+    setRating(value);
+  };
+
+  const getMenuItemStyle = (item) => {
+    return highlightedItem === item
+      ? { backgroundColor: "yellow", borderRadius: 5 }
+      : {};
   };
   const handleRating = (value) => {
     setRating(value);
@@ -137,25 +163,34 @@ export default function SkillRecommendationPage() {
           </View>
 
 
+          <View style={styles.filterContainer}>
+            {["All", "male", "female"].map((Gender) => (
+              <TouchableOpacity
+                key={Gender}
+                style={[
+                  styles.filterButton,
+                  selectedGender === Gender && styles.selectedFilter,
+                ]}
+                onPress={() => handleGenderFilter(Gender)}
+              >
+                <Text style={styles.filterText}>{Gender}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <View style={styles.contentContainer}>
-            {!isSearching ? (
-              <>
-                <Text style={styles.sectionTitle}>Recommended Tutors For You:</Text>
-                <View style={styles.gridContainer}>
-                  {recommendedTutors.map((tutor, index) => renderTutorCard(tutor, index))}
-                </View>
-              </>
-            ) : (
-              <View style={styles.gridContainer}>
-                {searchResults.length > 0 ? (
-                  searchResults.map((tutor, index) => renderTutorCard(tutor, index))
-                ) : (
-                  <Text style={styles.noResults}>No tutors found for this skill</Text>
-                )}
-              </View>
-            )}
+            <Text style={styles.sectionTitle}>Recommended Tutors For You:</Text>
+            <View style={styles.gridContainer}>
+              {filteredTutors.length > 0 ? (
+                filteredTutors.map((tutor, index) => renderTutorCard(tutor, index))
+              ) : (
+                <Text style={styles.noResults}>No tutors found matching your criteria</Text>
+              )}
+            </View>
           </View>
         </ScrollView>
+
+        {/* Rest of the component remains the same... */}
         {/* Footer */}
         <View style={styles.footer}>
           <TouchableOpacity
@@ -468,10 +503,20 @@ const styles = StyleSheet.create({
     color: "#333",
     marginVertical: 10,
   },
-  // LogoutItem:{
-  //   fontSize: 18,
-  //   color: "#333",
-  //   fontWeight: 'bold',
-  //   marginVertical: 10,
-  // },
+  filterButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "#ddd",
+    borderRadius: 20,
+    marginHorizontal: 5,
+  },
+  selectedFilter: {
+    backgroundColor: "#007B7F",
+  },
+  filterText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#FFF",
+  },
+
 });

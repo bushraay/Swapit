@@ -42,7 +42,7 @@ const TabNavigator = () => {
         },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: 'gray',
-        headerShown: true,
+        headerShown: false,
       })}
     >
       <Tab.Screen name="Chats" options={{ tabBarBadge: unreadCount > 0 ? unreadCount : null }}>
@@ -53,9 +53,9 @@ const TabNavigator = () => {
   );
 };
 
-const MainStack = () => (
+const MainStack = ({route}) => (
   <Stack.Navigator>
-    <Stack.Screen name="Home" component={TabNavigator} options={{ headerShown: false }} />
+    <Stack.Screen name="Home" component={Chats} options={{ headerShown: true }} />
     <Stack.Screen
       name="Chat"
       component={Chat}
@@ -75,6 +75,7 @@ const MainStack = () => (
     <Stack.Screen name="Account" component={Account} />
     <Stack.Screen name="Group" component={Group} options={{ title: 'New Group' }} />
     <Stack.Screen name="ChatInfo" component={ChatInfo} options={{ title: 'Chat Information' }} />
+    <Stack.Screen name="Settings" component={Settings} options={{headerShown: false}} />
   </Stack.Navigator>
 );
 

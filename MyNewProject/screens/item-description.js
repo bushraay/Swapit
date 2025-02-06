@@ -1,57 +1,137 @@
 import React from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  ScrollView,
-  Image,
+import { 
+  StyleSheet, 
+  Text, 
+  View, 
+  ScrollView, 
+  Image, 
   TouchableOpacity,
+  Alert,
+  ActivityIndicator
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { auth, database } from 'C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+//import items from "C:/Users/DELL/Documents/GitHub/fyp/Backend/items";
 
 export default function ItemDescriptionPage({ route }) {
   const navigation = useNavigation();
-  const { item } = route.params; // Retrieve the item data
+  const { item } = route.params;
+  const [loading, setLoading] = React.useState(false);
+
+  const handleInterested = async () => {
+    try {
+      setLoading(true);
+      
+      // 1. Get owner's full name from item
+      const ownerFullName = Item.Name; // Ensure this is the correct field
+  
+      // 2. Find owner in MongoDB
+      const mongoResponse = await fetch('192.168.0.113:5000/get-user-by-fullname', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ fullName: ownerFullName }), // Ensure this is correct
+      });
+  
+      if (!mongoResponse.ok) {
+        throw new Error('Owner not found in our system');
+      }
+  
+      const mongoData = await mongoResponse.json();
+      const ownerEmail = mongoData.email;
+  
+      // 3. Check if owner exists in Firebase
+      const firebaseUserRef = doc(database, 'users', ownerEmail);
+      const firebaseUserSnap = await getDoc(firebaseUserRef);
+      
+      if (!firebaseUserSnap.exists()) {
+        throw new Error('Owner not registered in messaging system');
+      }
+  
+      // 4. Create chat ID (sorted emails)
+      const currentUserEmail = auth.currentUser .email;
+      const chatId = [currentUserEmail, ownerEmail].sort().join('_');
+  
+      // 5. Check/Create chat document
+      const chatRef = doc(database, 'chats', chatId);
+      const chatSnap = await getDoc(chatRef);
+  
+      if (!chatSnap.exists()) {
+        await setDoc(chatRef, {
+          users: [
+            {
+              email: currentUserEmail,
+              name: auth.currentUser .displayName,
+              deletedFromChat: false
+            },
+            {
+              email: ownerEmail,
+              name: firebaseUserSnap.data().name,
+              deletedFromChat: false
+            }
+          ],
+          messages: [],
+          lastUpdated: new Date()
+        });
+      }
+  
+      // 6. Navigate to chat
+      navigation.navigate('Chat', {
+        id: chatId,
+        chatName: firebaseUserSnap.data().name
+      });
+  
+    } catch (error) {
+      Alert.alert('Error', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
         {/* Header */}
         <View style={styles.header}>
-            <TouchableOpacity onPress={() => navigation.goBack()}>
-              <Text style={styles.backArrow}>{"<"}</Text>
-            </TouchableOpacity>
-            <Text style={styles.headerTitle}>Item Description</Text>
-            
-          </View>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backArrow}>{"<"}</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Item Description</Text>
+        </View>
 
-
-        {/* Content inside a ScrollView */}
+        {/* Content */}
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Image source={{ uri: item.Image }} style={styles.itemImage} />
           <Text style={styles.itemTitle}>{item.ItemName}</Text>
-          <Text style={styles.itemCategory}>Owner Name: {item.PersonName}</Text>
+          <Text style={styles.itemCategory}>Owner Name: {item.Name}</Text>
           <Text style={styles.itemCategory}>Category: {item.Category}</Text>
           <Text style={styles.itemCategory}>Condition: {item.Condition}</Text>
           <Text style={styles.itemDescription}>{item.Description}</Text>
 
           {/* Buttons */}
           <View style={styles.buttonContainer}>
-          <TouchableOpacity
-                style={styles.notInterestedButton}
-                // onPress={() => navigation.navigate("AddItemPage")} //redirect to message page
-                onPress={() => navigation.navigate("MessagePage")}
-              >
-                <Text style={styles.buttonText}>Interested</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.notInterestedButton}
-                onPress={() => navigation.navigate("RecommendationPage")}
-              >
-                <Text style={styles.buttonText}>Not Interested</Text>
-              </TouchableOpacity>
-            </View>
+            {loading ? (
+              <ActivityIndicator size="large" color="#007B7F" />
+            ) : (
+              <>
+                <TouchableOpacity
+                  style={styles.notInterestedButton}
+                  onPress={handleInterested}
+                >
+                  <Text style={styles.buttonText}>Interested</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.notInterestedButton}
+                  onPress={() => navigation.navigate("RecommendationPage")}
+                >
+                  <Text style={styles.buttonText}>Not Interested</Text>
+                </TouchableOpacity>
+              </>
+            )}
+          </View>
         </ScrollView>
 
         {/* Sticky Footer */}

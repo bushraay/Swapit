@@ -4,7 +4,6 @@ import { createStackNavigator } from "@react-navigation/stack";
 import { Text, View } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import axios from 'axios';
-
 import SettingsPage from "./screens/settings";
 import AboutPage from "./screens/about_swap"; 
 import RecommendationPage from "./screens/Item_recommendation"; 
@@ -22,8 +21,10 @@ import CreateAccountPage from './screens/sign-up';
 import InfoAddPage from './screens/sign-infoadd';
 import Editprofile from './screens/edit_profile';
 import Myprofile from './screens/my_profile';
-import {MessagingApp} from './react-native-chat/App'; // Import chat app
+import { MessagingApp } from './react-native-chat/App'; // Import the messaging app's RootNavigator
 import { NotificationProvider } from './contexts/NotificationContext';
+import { AuthenticatedUserProvider } from './react-native-chat/contexts/AuthenticatedUserContext'; // Import AuthenticatedUserProvider
+import { UnreadMessagesProvider } from './react-native-chat/contexts/UnreadMessagesContext'; // Import UnreadMessagesProvider
 import * as Notifications from "expo-notifications";
 import * as SplashScreen from 'expo-splash-screen';
 
@@ -82,29 +83,40 @@ export default function App() {
 
   return (
     <NotificationProvider>
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="GetStartedPage">
-        <Stack.Screen name="GetStartedPage" component={GetStartedPage} options={{ headerShown: false }} />
-        <Stack.Screen name="LoginPage" component={LoginPage} options={{ headerShown: false }} />
-        <Stack.Screen name="CreateAccountPage" component={CreateAccountPage} options={{ headerShown: false }} />
-        <Stack.Screen name="InfoAddPage" component={InfoAddPage} options={{ headerShown: false }} />
-        <Stack.Screen name="Myprofile" component={Myprofile} options={{ headerShown: false }} />
-        <Stack.Screen name="Editprofile" component={Editprofile} options={{ headerShown: false }} />
-        <Stack.Screen name="RecommendationPage" component={RecommendationPage} options={{ headerShown: false }} />
-        <Stack.Screen name="ItemDescriptionPage" component={ItemDescriptionPage} options={{ headerShown: false }} />
-        <Stack.Screen name="SkillRecommendationPage" component={SkillRecommendationPage} options={{ headerShown: false }} />
-        <Stack.Screen name="TutorProfilePage" component={TutorProfilePage} options={{ headerShown: false }} />
-        <Stack.Screen name="SkillDescriptionPage" component={SkillDescriptionPage} options={{ headerShown: false }} />
-        <Stack.Screen name="SkillMatchingPage" component={SkillMatchingPage} options={{ headerShown: false }} />
-        <Stack.Screen name="SettingsPage" component={SettingsPage} options={{ headerShown: false }} />
-        <Stack.Screen name="AboutPage" component={AboutPage} options={{ headerShown: false }} />
-        <Stack.Screen name="AddItemPage" component={AddItemPage} options={{ headerShown: false }} />
-        <Stack.Screen name="HistoryPage" component={HistoryPage} options={{ headerShown: false }} />
-        <Stack.Screen name="UserReviewPage" component={UserReviewPage} options={{ headerShown: false }} />
-        <Stack.Screen name="MessagingPage" component={MessagingApp} options={{ headerShown: false }} />
-      </Stack.Navigator>
-      <Text>{responseMessage}</Text>
-    </NavigationContainer>
-   </NotificationProvider>
+      <AuthenticatedUserProvider>
+        <UnreadMessagesProvider>
+          <NavigationContainer>
+            <Stack.Navigator initialRouteName="GetStartedPage">
+              {/* Main App Screens */}
+              <Stack.Screen name="GetStartedPage" component={GetStartedPage} options={{ headerShown: false }} />
+              <Stack.Screen name="LoginPage" component={LoginPage} options={{ headerShown: false }} />
+              <Stack.Screen name="CreateAccountPage" component={CreateAccountPage} options={{ headerShown: false }} />
+              <Stack.Screen name="infoaddPage" component={infoaddPage} options={{ headerShown: false }} />
+              <Stack.Screen name="Myprofile" component={Myprofile} options={{ headerShown: false }} />
+              <Stack.Screen name="Editprofile" component={Editprofile} options={{ headerShown: false }} />
+              <Stack.Screen name="RecommendationPage" component={RecommendationPage} options={{ headerShown: false }} />
+              <Stack.Screen name="ItemDescriptionPage" component={ItemDescriptionPage} options={{ headerShown: false }} />
+              <Stack.Screen name="SkillRecommendationPage" component={SkillRecommendationPage} options={{ headerShown: false }} />
+              <Stack.Screen name="TutorProfilePage" component={TutorProfilePage} options={{ headerShown: false }} />
+              <Stack.Screen name="SkillDescriptionPage" component={SkillDescriptionPage} options={{ headerShown: false }} />
+              <Stack.Screen name="SkillMatchingPage" component={SkillMatchingPage} options={{ headerShown: false }} />
+              <Stack.Screen name="SettingsPage" component={SettingsPage} options={{ headerShown: false }} />
+              <Stack.Screen name="AboutPage" component={AboutPage} options={{ headerShown: false }} />
+              <Stack.Screen name="AddItemPage" component={AddItemPage} options={{ headerShown: false }} />
+              <Stack.Screen name="HistoryPage" component={HistoryPage} options={{ headerShown: false }} />
+              <Stack.Screen name="UserReviewPage" component={UserReviewPage} options={{ headerShown: false }} />
+
+              {/* Messaging App Integration */}
+              <Stack.Screen
+                name="MessagingPage"
+                component={MessagingApp} // Use the RootNavigator from the messaging app
+                options={{ headerShown: false }}
+              />
+            </Stack.Navigator>
+            <Text>{responseMessage}</Text>
+          </NavigationContainer>
+        </UnreadMessagesProvider>
+      </AuthenticatedUserProvider>
+    </NotificationProvider>
   );
 }

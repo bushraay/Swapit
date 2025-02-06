@@ -96,11 +96,7 @@ export default function SkillDescriptionPage({ route }) {
             <View style={styles.buttonContainer}>
               <TouchableOpacity
                 style={styles.interestedButton}
-                onPress={() =>
-                  navigation.navigate('MessagingPage', {
-                    skill: skill.name,
-                  })
-                }
+                onPress={() => navigation.navigate("MessagingPage", { previousScreen: "ItemDescriptionPage" })}
               >
                 <Text style={styles.buttonText}>Interested</Text>
               </TouchableOpacity>

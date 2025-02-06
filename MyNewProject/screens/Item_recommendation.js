@@ -1,4 +1,4 @@
-import React, { useState, useEffect} from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -16,19 +16,23 @@ import axios from "axios";
 
 export default function RecommendationPage() {
   const navigation = useNavigation();
-  const [menuVisible, setMenuVisible] = useState(false); // State for menu visibility
+  const [items, setItems] = useState([]);
+  const [menuVisible, setMenuVisible] = useState(false);
   const [highlightedItem, setHighlightedItem] = useState("");
-  const [items, setItems] = useState([]); // State to store items
+  const [filteredItems, setFilteredItems] = useState([]); // Filtered items state
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState("All"); // Default filter is "All"
+
+  // Categories for filtering
+  const categories = ["All", "Books", "Sports", "Electronics", "Stationery", "Accessories"];
 
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await axios.get("http://10.20.4.53:5000/recommendedItems");
+        const response = await axios.get("http://192.168.0.103:5000/recommendedItems");
         if (response.data.status === "Ok") {
           setItems(response.data.data);
+          setFilteredItems(response.data.data); // Initially display all items
         }
       } catch (error) {
         console.error("Error fetching items:", error);
@@ -92,46 +96,22 @@ export default function RecommendationPage() {
 
       setSearchResults(filteredResults);
     }
-    };
-    const truncateDescription = (description) => {
-      const words = description.split(" ");
-      return words.length > 20 ? words.slice(0, 20).join(" ") + "..." : description;
-    };
-  const getMenuItemStyle = (item) => {
-    return highlightedItem === item
-      ? { backgroundColor: "yellow",  borderRadius: 5 }
-      : {};
   };
-  const renderItemCard = (item, index) => (
-    <View key={index} style={styles.itemCard}>
-      <Image source={{ uri: item.Image }} style={styles.itemImage} />
-      <View style={styles.itemInfo}>
-        <Text style={styles.itemTitle}>{item.ItemName}</Text>
-        <Text style={styles.itemName}>Owner Name: {item.PersonName}</Text>
-        <Text style={styles.itemCategory}>Category: {item.Category}</Text>
-        <Text style={styles.itemCondition}>Condition: {item.Condition}</Text>
-        <Text style={styles.itemDescription}>
-          {truncateDescription(item.Description)}
-        </Text>
-        <TouchableOpacity
-          onPress={() =>
-            navigation.navigate("ItemDescriptionPage", { 
-              item: {
-                Image: item.Image, 
-                ItemName: item.ItemName, 
-                PersonName: item.PersonName, 
-                Category: item.Category, 
-                Condition: item.Condition, 
-                Description: item.Description
-              } 
-            })
-          }
-        >
-          <Text style={styles.readMore}>Read More</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
+
+  const handleSearch = (query) => {
+    setSearchQuery(query);
+    if (query.trim() === "") {
+      handleCategorySelect(selectedCategory); // Reset filtered list
+    } else {
+      const searchResults = items.filter(
+        (item) =>
+          item.ItemName.toLowerCase().includes(query.toLowerCase()) ||
+          item.Category.toLowerCase().includes(query.toLowerCase())
+      );
+      setFilteredItems(searchResults);
+    }
+  };
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
@@ -146,79 +126,65 @@ export default function RecommendationPage() {
           <Text style={styles.headerTitle}>Item Dashboard</Text>
         </View>
 
-
-        {/* Search Bar */}
-        <View style={styles.searchContainer}>
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Search for items..."
-            placeholderTextColor="#777"
-            value={searchQuery}
-            onChangeText={handleSearch}
-          />
-          <TouchableOpacity style={styles.searchButton}>
-            <Image
-              source={require("../assets/search.png")}
-              style={styles.searchIcon}
+        {/* Search and Filters */}
+        <View style={styles.content}>
+          <View style={styles.searchContainer}>
+            <TextInput
+              style={styles.searchBar}
+              placeholder="Search for items..."
+              placeholderTextColor="#777"
+              value={searchQuery}
+              onChangeText={handleSearch}
             />
-          </TouchableOpacity>
-        </View>
-        <ScrollView style={styles.scrollContainer}>
-          {!isSearching ? (
-            items.length > 0 ? (
-              items.map((item, index) => renderItemCard(item, index))
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.filterContainer}
+          >
+            {categories.map((category, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[
+                  styles.filterButton,
+                  selectedCategory === category && styles.selectedFilter,
+                ]}
+                onPress={() => handleCategorySelect(category)}
+              >
+                <Text style={styles.filterText}>{category}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* Display Filtered Items */}
+          <ScrollView style={styles.scrollContainer}>
+            {filteredItems.length > 0 ? (
+              filteredItems.map((item, index) => (
+                <View key={index} style={styles.itemCard}>
+                  <Image source={{ uri: item.Image }} style={styles.itemImage} />
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.itemTitle}>Name: {item.ItemName}</Text>
+                    <Text style={styles.itemCategory}>
+                      Category: {item.Category}
+                    </Text>
+                    <TouchableOpacity
+                      onPress={() =>
+                        navigation.navigate("ItemDescriptionPage", { item })
+                      }
+                    >
+                      <Text style={styles.readMore}>Read More</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))
             ) : (
               <Text style={styles.noItemsText}>No items available</Text>
-            )
-          ) : (
-            searchResults.length > 0 ? (
-              searchResults.map((item, index) => renderItemCard(item, index))
-            ) : (
-              <Text style={styles.noItemsText}>No matching items found</Text>
-            )
-          )}
-        </ScrollView>
+            )}
+          </ScrollView>
+        </View>
 
-        {/* Recommendations */}
-        <ScrollView style={styles.scrollContainer}>
-        {items.length > 0 ? (
-        items.map((item, index) => (
-          <View key={index} style={styles.itemCard}>
-            <Image source={{ uri: item.Image }} style={styles.itemImage} />
-            <View style={styles.itemInfo}>
-              <Text style={styles.itemTitle}>{item.ItemName}</Text>
-              <Text style={styles.itemName}>Owner Name: {item.PersonName}</Text>
-              <Text style={styles.itemCategory}>Category: {item.Category}</Text>
-              <Text style={styles.itemCondition}>Condition: {item.Condition}</Text>
-              <Text style={styles.itemDescription}>
-                {truncateDescription(item.Description)}
-              </Text>
-              <TouchableOpacity
-                onPress={() =>
-                  navigation.navigate("ItemDescriptionPage", { 
-                    item: {
-                      Image: item.Image, 
-                      ItemName: item.ItemName, 
-                      PersonName: item.PersonName, 
-                      Category: item.Category, 
-                      Condition: item.Condition, 
-                      Description: item.Description
-                    } 
-                  })
-                }
-              >
-                <Text style={styles.readMore}>Read More</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))
-      ) : (
-        <Text style={styles.noItemsText}>No items available</Text>
-      )}
-
-        </ScrollView>
-
-        {/* Footer */}
+        {/* Sticky Footer */}
         <View style={styles.footer}>
           <TouchableOpacity
             style={styles.footerButton}
@@ -240,7 +206,7 @@ export default function RecommendationPage() {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.footerButton}
-            onPress={() => navigation.navigate("chatPage")}
+            onPress={() => navigation.navigate("MessagingPage")}
           >
             <Image
               source={require("../assets/messages.png")}
@@ -257,99 +223,58 @@ export default function RecommendationPage() {
             />
           </TouchableOpacity>
         </View>
-
-        {/* Menu Modal */}
-        <Modal
-          visible={menuVisible}
-          transparent={true}
-          animationType="slide"
-          onRequestClose={() => setMenuVisible(false)}
-        >
-          <View style={styles.menuOverlay}>
-            <View style={styles.menuContainer}>
-              <TouchableOpacity
-                onPress={() => setMenuVisible(false)} // Close the menu
-                style={styles.closeButton}
-              >
-                <Text style={styles.closeText}>Close</Text>
-              </TouchableOpacity>
-              {/* Menu Items */}
-              <TouchableOpacity
-                onPress={() => navigation.navigate("SettingsPage")}
-                onPressIn={() => setHighlightedItem("Settings")}
-                onPressOut={() => setHighlightedItem("")}
-                style={[styles.menuItem, getMenuItemStyle("Settings")]}
-              >
-                <Text style={styles.menuItemText}>Settings</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                onPress={() => navigation.navigate("HistoryPage")}
-                onPressIn={() => setHighlightedItem("History")}
-                onPressOut={() => setHighlightedItem("")}
-                style={[styles.menuItem, getMenuItemStyle("History")]}
-              >
-                <Text style={styles.menuItemText}>History</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => navigation.navigate("HelpFeedbackPage")}
-                onPressIn={() => setHighlightedItem("Help and Feedback")}
-                onPressOut={() => setHighlightedItem("")}
-                style={[styles.menuItem, getMenuItemStyle("Help and Feedback")]}
-              >
-                <Text style={styles.menuItemText}>Help and Feedback</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={() => navigation.navigate("LoginPage")}
-                onPressIn={() => setHighlightedItem("Log Out")}
-                onPressOut={() => setHighlightedItem("")}
-                style={[styles.menuItem, getMenuItemStyle("Log Out")]}
-              >
-                <Text style={styles.menuItemText}>Log Out</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Modal>
       </SafeAreaView>
     </SafeAreaProvider>
   );
-};
+}
+
+// Styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFF8E1",
   },
   header: {
-  flexDirection: "row", // Align items horizontally
-  alignItems: "center", // Center items vertically
-  justifyContent: "flex-start", // Align items to the start (left)
-  padding: 15,
-  backgroundColor: "#335c67",
-},
-menuIconContainer: {
-  marginRight: 15, // Add some space between the icon and the heading
-},
-headerTitle: {
-  fontSize: 18,
-  color: "#FFF",
-  fontWeight: "bold",
-},
-
-  backArrow: {
-    fontSize: 20,
-    color: "#FFF",
-    marginRight: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "flex-start",
+    padding: 15,
+    backgroundColor: "#335c67",
   },
-  
-  title: {
-    color: "#FFFFFF",
-    fontSize: 24,
+  menuIconContainer: {
+    marginRight: 15,
+  },
+  footer: {
+    height: 70,
+    backgroundColor: "#335c67",
+    flexDirection: "row",
+    justifyContent: "space-around",
+    alignItems: "center",
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+  footerButton: {
+    alignItems: "center",
+  },
+  footerIcon: {
+    width: 30,
+    height: 30,
+    tintColor: "#FFFFFF",
+  },
+  content: {
+    flex: 1,
+    marginBottom: 70, // Ensures space above footer
+  },
+  headerTitle: {
+    fontSize: 18,
+    color: "#FFF",
     fontWeight: "bold",
   },
   searchContainer: {
     flexDirection: "row",
     marginVertical: 10,
-    alignItems: "center",
     paddingHorizontal: 15,
   },
   searchBar: {
@@ -362,78 +287,34 @@ headerTitle: {
     borderWidth: 1,
     borderColor: "#CCC",
   },
-  searchButton: {
-    marginLeft: 10,
+  filterContainer: {
+    flexDirection: "row",
+    paddingHorizontal: 4,
+    paddingBottom: 6,
+    marginBottom: 10,
   },
-  searchIcon: {
-    width: 34,
-    height: 34,
-    tintColor: "#FFFFF",
-  },
-  plusIconContainer: {
-    width: 24,
-    height: 24,
+  filterButton: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: "#ddd",
+    borderRadius: 20,
+    marginRight: 10,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
-    borderRadius: 20,
+    minHeight: 36,
   },
-  menuOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-start",
-  },
-  menuContainer: {
-    backgroundColor: "#FFF",
-    padding: 20,
-    borderRadius: 10,
-    marginTop: 50, // Adjust as needed for better visibility
-    marginHorizontal: 20,
-  },
-  closeButton: {
-    alignSelf: "flex-end",
-    marginBottom: 20,
-    padding: 5,
-  },
-  closeText: {
-    fontSize: 16,
-    color: "#007B7F",
+  filterText: {
+    fontSize: 14,
     fontWeight: "bold",
+    color: "#000",
   },
-  menuItem: {
-    fontSize: 18,
-    color: "#333",
-    marginVertical: 10,
-  },
-  LogoutItem:{
-    fontSize: 18,
-    color: "#333",
-    fontWeight: 'bold',
-    marginVertical: 10,
-  },
-  plusIcon: {
-    width: 20,
-    height: 20,
-    tintColor: "#007B7F",
-  },
-  recommendationHeader: {
-    marginVertical: 10,
-    padding: 7,
-    // backgroundColor: "#F7E8AF",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    borderRadius: 10,
-  },
-  recommendationText: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
+  selectedFilter: {
+    backgroundColor: "#335c67",
   },
   scrollContainer: {
-    flex: 1,
-    padding: 10,
-    paddingBottom: 80, // Ensure space for the footer
+    // flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 10,
   },
   itemCard: {
     flexDirection: "row",
@@ -465,42 +346,19 @@ headerTitle: {
     fontSize: 14,
     color: "#555555",
     marginVertical: 5,
-    fontWeight: 'bold',
-  },
-  itemName:{
-    fontSize: 14,
-    color: "#555555",
-    marginTop: 10,
-    fontWeight: 'bold',
-  },
-  itemDescription: {
-    fontSize: 12,
-    color: "#555555",
+    fontWeight: "bold",
   },
   readMore: {
     color: "#007B7F",
     fontSize: 14,
-    marginTop: 15,
+    marginTop: 5,
     fontWeight: "bold",
     textDecorationLine: "underline",
   },
-  footer: {
-    height: 70,
-    backgroundColor: "#335c67",
-    flexDirection: "row",
-    justifyContent: "space-around",
-    alignItems: "center",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-  },
-  footerButton: {
-    alignItems: "center",
-  },
-  footerIcon: {
-    width: 30,
-    height: 30,
-    tintColor: "#FFFFFF",
+  noItemsText: {
+    textAlign: "center",
+    fontSize: 16,
+    color: "#555",
+    marginTop: 20,
   },
 });

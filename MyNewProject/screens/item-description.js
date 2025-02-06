@@ -33,6 +33,7 @@ export default function ItemDescriptionPage({ route }) {
           <Text style={styles.itemTitle}>{item.ItemName}</Text>
           <Text style={styles.itemCategory}>Owner Name: {item.PersonName}</Text>
           <Text style={styles.itemCategory}>Category: {item.Category}</Text>
+          <Text style={styles.itemCategory}>Condition: {item.Condition}</Text>
           <Text style={styles.itemDescription}>{item.Description}</Text>
 
           {/* Buttons */}

@@ -91,7 +91,7 @@ export default function App() {
               <Stack.Screen name="GetStartedPage" component={GetStartedPage} options={{ headerShown: false }} />
               <Stack.Screen name="LoginPage" component={LoginPage} options={{ headerShown: false }} />
               <Stack.Screen name="CreateAccountPage" component={CreateAccountPage} options={{ headerShown: false }} />
-              <Stack.Screen name="infoaddPage" component={infoaddPage} options={{ headerShown: false }} />
+              <Stack.Screen name="infoaddPage" component={InfoAddPage} options={{ headerShown: false }} />
               <Stack.Screen name="Myprofile" component={Myprofile} options={{ headerShown: false }} />
               <Stack.Screen name="Editprofile" component={Editprofile} options={{ headerShown: false }} />
               <Stack.Screen name="RecommendationPage" component={RecommendationPage} options={{ headerShown: false }} />

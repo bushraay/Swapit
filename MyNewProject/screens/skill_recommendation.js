@@ -47,10 +47,10 @@ export default function SkillRecommendationPage() {
     applyFilters(query, selectedGender);
   };
 
-  const handleGenderFilter = (Gender) => {
-    setSelectedGender(Gender);
-    applyFilters(searchQuery, Gender);
-  };
+  // const handleGenderFilter = (Gender) => {
+  //   setSelectedGender(Gender);
+  //   applyFilters(searchQuery, Gender);
+  // };
 
   const applyFilters = (search, Gender) => {
     let filtered = recommendedTutors;
@@ -79,14 +79,14 @@ export default function SkillRecommendationPage() {
     setRating(value);
   };
 
-  const getMenuItemStyle = (item) => {
-    return highlightedItem === item
-      ? { backgroundColor: "yellow", borderRadius: 5 }
-      : {};
-  };
-  const handleRating = (value) => {
-    setRating(value);
-  };
+  // const getMenuItemStyle = (item) => {
+  //   return highlightedItem === item
+  //     ? { backgroundColor: "yellow", borderRadius: 5 }
+  //     : {};
+  // };
+  // const handleRating = (value) => {
+  //   setRating(value);
+  // };
   const handleGenderFilter = (gender) => {
     setSelectedGender(gender);
     if (gender === "All") {

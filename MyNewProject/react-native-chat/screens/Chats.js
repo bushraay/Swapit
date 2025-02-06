@@ -253,7 +253,7 @@ const Chats = ({ setUnreadCount, route }) => {
           onPress={() => navigation.navigate("SkillRecommendationPage")}
         >
           <Image
-            source={require("C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/assets/skills.png")}
+            source={require("C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/assets/skills.png")}
             style={styles.footerIcon}
           />
         </TouchableOpacity>
@@ -262,7 +262,7 @@ const Chats = ({ setUnreadCount, route }) => {
           onPress={() => navigation.navigate("RecommendationPage")}
         >
           <Image
-            source={require("C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/assets/items.png")}
+            source={require("C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/assets/items.png")}
             style={styles.footerIcon}
           />
         </TouchableOpacity>
@@ -271,7 +271,7 @@ const Chats = ({ setUnreadCount, route }) => {
           onPress={() => navigation.navigate("MessagingPage", { previousScreen: 'SkillRecommendationPage' })}
         >
           <Image
-            source={require("C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/assets/messages.png")}
+            source={require("C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/assets/messages.png")}
             style={styles.footerIcon}
           />
         </TouchableOpacity>
@@ -280,7 +280,7 @@ const Chats = ({ setUnreadCount, route }) => {
           onPress={() => navigation.navigate("Myprofile")}
         >
           <Image
-            source={require("C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/assets/profile.png")}
+            source={require("C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/assets/profile.png")}
             style={styles.footerIcon}
           />
         </TouchableOpacity>

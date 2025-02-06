@@ -96,7 +96,7 @@ app.get('/getUserProfileByEmail', async (req, res) => {
          return res.status(400).json({ message: "Email is required" });
       }
 
-      const user = await User.findOne({ email });
+      const user = await MergedUser.findOne({ email });
 
       if (!user) {
          return res.status(404).json({ message: "User not found" });
@@ -232,7 +232,9 @@ const bipartiteMatch = (users) => {
 // Create account
 app.post('/CreateAccount', async (req, res) => {
    try {
-      const { f_name, l_name, email, age, university, user_name, password, gender, user_id,  skills_i_want, skills_i_have,availability } = req.body;
+
+      //, gender, user_id,  skills_i_want, skills_i_have,availability
+      const { f_name, l_name, email, age, university, user_name, password } = req.body;
 
       // Validate required fields
       if (!f_name || !l_name || !email || !age || !university || !user_name || !password ) {
@@ -256,13 +258,13 @@ app.post('/CreateAccount', async (req, res) => {
          age,
          university,
          password: encryptedPassword,
-       // From Skills collection
-         user_name,
-         user_id,
-         gender,
-         skills_i_want,
-         skills_i_have,
-         availability
+      //  // From Skills collection
+      //    user_name,
+      //    user_id,
+      //    gender,
+      //    skills_i_want,
+      //    skills_i_have,
+      //    availability
             });
 
       res.status(201).json({ message: "User created successfully", data: newUser });
@@ -272,36 +274,6 @@ app.post('/CreateAccount', async (req, res) => {
    }
 });
 
-// Add to your backend routes
-app.post('/get-user-by-fullname', async (req, res) => {
-   try {
-     const { fullName } = req.body; // Expecting fullName in the request body
- 
-     // Check if fullName is provided
-     if (!fullName) {
-       return res.status(400).json({ error: "Full name is required" });
-     }
- 
-     // Find user by concatenated first + last name
-     const user = await User.findOne({ 
-       $expr: { 
-         $eq: [
-           { $concat: ["$f_name", " ", "$l_name"] },
-           fullName
-         ]
-       }
-     });
- 
-     if (!user) {
-       return res.status(404).json({ error: "User  not found" });
-     }
- 
-     res.json({ email: user.email });
-   } catch (error) {
-     console.error("Error fetching user by full name:", error);
-     res.status(500).json({ error: "Internal server error" });
-   }
- });
 // Add skills
 app.post("/AddSkills", async (req, res) => {
    try {
@@ -383,31 +355,6 @@ app.post('/Login', async (req, res) => {
 //get user profile data
 
 
-app.get("/SearchTutors", async (req, res) => {
-   try {
-      // Use default values to handle undefined query parameters
-      const skillsToLearn = req.query.skillsToLearn ? req.query.skillsToLearn.split(",") : [];
-      const skillsIHave = req.query.skillsIHave ? req.query.skillsIHave.split(",") : [];
- 
-      const tutors = await Skills.find();
-      const sortedTutors = tutors.sort((a, b) => {
-         const aScore =
-            (skillsToLearn.includes(a["Skills I Have"]) ? 2 : 0) +
-            (skillsIHave.includes(a["Skills I Want"]) ? 1 : 0);
-         const bScore =
-            (skillsToLearn.includes(b["Skills I Have"]) ? 2 : 0) +
-            (skillsIHave.includes(b["Skills I Want"]) ? 1 : 0);
-         return bScore - aScore;
-      });
-
- 
-      res.status(200).json({ status: "Ok", data: sortedTutors });
-   } catch (error) {
-      console.error("Error fetching tutors:", error);
-      res.status(500).json({ message: "Internal server error" });
-   }
- });
-
 // Fetch recommended tutors
 app.get("/recommendedTutors", async (req, res) => {
   try {
@@ -426,8 +373,10 @@ app.get("/recommendedTutors", async (req, res) => {
         return bScore - aScore;
      });
 
+     // Limit the results to the top 10 tutors
+     const limitedTutors = sortedTutors.slice(0, 500);
 
-     res.status(200).json({ status: "Ok", data: sortedTutors });
+     res.status(200).json({ status: "Ok", data: limitedTutors });
   } catch (error) {
      console.error("Error fetching tutors:", error);
      res.status(500).json({ message: "Internal server error" });

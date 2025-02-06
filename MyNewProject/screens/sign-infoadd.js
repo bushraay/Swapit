@@ -119,7 +119,7 @@ export default function InfoAddPage() {
       console.log("Sending skills data:", skillsData);
   
       const response = await axios.post(
-        "http://192.168.0.103:5000/AddSkills",
+        "http://10.20.5.46:5000/AddSkills",
         skillsData,
         { timeout: 10000 }
       );

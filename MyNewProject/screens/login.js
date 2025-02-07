@@ -13,7 +13,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 
-import { auth } from "C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js";
+import { auth } from "F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js";
 
 const LoginPage = ({ navigation }) => {
   const [email, setEmail] = useState("");
@@ -37,25 +37,26 @@ const LoginPage = ({ navigation }) => {
     }
   
     try {
-      // Attempt MongoDB login
       const userData = { email, password };
       const res = await axios.post(
-        "http://10.20.5.46:5000/Login",
+        "http://10.20.2.150:5000/Login",
         userData,
         { timeout: 10000 }
       );
   
       if (res.data.status === "Ok") {
-        // Extract user_id from the response
         const user_id = res.data.data.user_id; // Ensure this matches your backend response
         const token = res.data.data.token;
         const userEmail = email;
   
-        // If MongoDB login is successful, proceed with Firebase login
+        if (!token) {
+          Alert.alert("Error", "Token is missing from the response.");
+          return;
+        }
+  
         const firebaseSuccess = await handleFirebaseLogin();
   
         if (firebaseSuccess) {
-          // Both logins successful
           await AsyncStorage.setItem("isLoggedIn", "true");
           await AsyncStorage.setItem("token", token);
           await AsyncStorage.setItem("userEmail", userEmail);
@@ -73,6 +74,7 @@ const LoginPage = ({ navigation }) => {
       Alert.alert("Error", "An error occurred while logging in.");
     }
   };
+  
 
   return (
     <SafeAreaView style={styles.container}>

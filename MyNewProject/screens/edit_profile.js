@@ -6,51 +6,36 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  Image,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
+import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import DropDownPicker from "react-native-dropdown-picker";
 import axios from "axios";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-
-
-import DropDownPicker from "react-native-dropdown-picker"; // Import dropdown picker
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function EditProfile() {
   const navigation = useNavigation();
 
-  // States to store user profile data
   const [userData, setUserData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // State hooks for each field
-  const [age, setAge] = useState("");
-  const [email, setEmail] = useState("");
-  const [university, setUniversity] = useState("");
-  const [skillsYouHave, setSkillsYouHave] = useState("");
   const [skillsCategory, setSkillsCategory] = useState(null);
-  const [skillsYouWantToLearn, setSkillsYouWantToLearn] = useState("");
   const [learningCategory, setLearningCategory] = useState(null);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [availability, setAvailability] = useState("");
+  const [isSkillsCategoryOpen, setIsSkillsCategoryOpen] = useState(false);
+  const [isLearningCategoryOpen, setIsLearningCategoryOpen] = useState(false);
 
-    // State for dropdown open/close
-    const [isSkillsCategoryOpen, setIsSkillsCategoryOpen] = useState(false);
-    const [isLearningCategoryOpen, setIsLearningCategoryOpen] = useState(false);
-  
-    // Dropdown items
-    const categoryItems = [
-      { label: "Programming", value: "Programming" },
-      { label: "Design", value: "Design" },
-      { label: "Marketing", value: "Marketing" },
-    ];
-  
+  const categoryItems = [
+    { label: "Programming", value: "Programming" },
+    { label: "Design", value: "Design" },
+    { label: "Marketing", value: "Marketing" },
+  ];
 
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        // Get the email from AsyncStorage
-        const email = await AsyncStorage.getItem('userEmail');
+        const email = await AsyncStorage.getItem("userEmail");
 
         if (!email) {
           setError("Email not found. Please log in.");
@@ -58,9 +43,10 @@ export default function EditProfile() {
           return;
         }
 
-        // Fetch the user profile using the email
-        const response = await axios.get(`http://10.20.5.46:5000/getUserProfileByEmail?email=${email}`);
-        setUserData(response.data.data);  // Assuming the API returns the user data inside `data`
+        const response = await axios.get(
+          `http://10.20.2.150:5000/getUserProfileByEmail?email=${email}`
+        );
+        setUserData(response.data.data);
       } catch (err) {
         setError("Error fetching user profile");
       } finally {
@@ -72,7 +58,6 @@ export default function EditProfile() {
   }, []);
 
   const handleSave = () => {
-    // You can handle the save functionality here to update the user profile
     console.log("Profile updated!");
   };
 
@@ -85,122 +70,172 @@ export default function EditProfile() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={styles.backArrow}>{"<"}</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Edit Profile</Text>
-      </View>
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        {/* Header */}
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Text style={styles.backArrow}>{"<"}</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Edit Profile</Text>
+        </View>
 
-      {/* Profile Form */}
-      <View style={styles.profileForm}>
-        {/* Age */}
-        <Text style={styles.label}>Age:</Text>
-        <TextInput
-          style={styles.input}
-          value={userData.Age}
-          onChangeText={(text) => setUserData({ ...userData, Age: text })}
-          placeholder="Enter your age"
-        />
+        {/* Scrollable Content */}
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          {/* Profile Form */}
+          <View style={styles.profileForm}>
+            <Text style={styles.label}>Age:</Text>
+            <TextInput
+              style={styles.input}
+              value={userData.Age}
+              onChangeText={(text) => setUserData({ ...userData, Age: text })}
+              placeholder="Enter your age"
+            />
 
-        {/* Email */}
-        <Text style={styles.label}>Email:</Text>
-        <TextInput
-          style={styles.input}
-          value={userData.email}
-          onChangeText={(text) => setUserData({ ...userData, Email: text })}
-          placeholder="Enter your email"
-        />
+            <Text style={styles.label}>Email:</Text>
+            <TextInput
+              style={styles.input}
+              value={userData.email}
+              onChangeText={(text) =>
+                setUserData({ ...userData, Email: text })
+              }
+              placeholder="Enter your email"
+            />
 
-        {/* University */}
-        <Text style={styles.label}>University:</Text>
-        <TextInput
-          style={styles.input}
-          value={userData.university}
-          onChangeText={(text) => setUserData({ ...userData, university: text })}
-          placeholder="Enter your university"
-        />
+            <Text style={styles.label}>University:</Text>
+            <TextInput
+              style={styles.input}
+              value={userData.university}
+              onChangeText={(text) =>
+                setUserData({ ...userData, university: text })
+              }
+              placeholder="Enter your university"
+            />
 
-        {/* Skills You Have */}
-        <Text style={styles.label}>Skills You Have:</Text>
-        <TextInput
-          style={styles.input}
-          value={userData["Skills I Have"]}
-          onChangeText={(text) => setUserData({ ...userData, "Skills I Have": text })}
-          placeholder="Enter skills you have"
-        />
+            <Text style={styles.label}>Skills You Have:</Text>
+            <TextInput
+              style={styles.input}
+              value={userData["Skills I Have"]}
+              onChangeText={(text) =>
+                setUserData({ ...userData, "Skills I Have": text })
+              }
+              placeholder="Enter skills you have"
+            />
 
-        <Text style={styles.label}>Category:</Text>
-          <DropDownPicker
-            open={isSkillsCategoryOpen}
-            value={skillsCategory}
-            items={categoryItems}
-            setOpen={setIsSkillsCategoryOpen}
-            setValue={setSkillsCategory}
-            setItems={() => {}}
-            style={styles.dropdown}
-            placeholder="Select a category"
-            listMode="SCROLLVIEW"
-          />
+            <Text style={styles.label}>Category:</Text>
+            <DropDownPicker
+              open={isSkillsCategoryOpen}
+              value={skillsCategory}
+              items={categoryItems}
+              setOpen={setIsSkillsCategoryOpen}
+              setValue={setSkillsCategory}
+              setItems={() => {}}
+              style={styles.dropdown}
+              placeholder="Select a category"
+              listMode="SCROLLVIEW"
+            />
 
-        {/* Skills You Want to Learn */}
-        <Text style={styles.label}>Skills You Want To Learn:</Text>
-        <TextInput
-          style={styles.input}
-          value={userData["Skills I Want"]}
-          onChangeText={(text) => setUserData({ ...userData, "Skills I Want": text })}
-          placeholder="Enter skills you want to learn"
-        />
+            <Text style={styles.label}>Skills You Want To Learn:</Text>
+            <TextInput
+              style={styles.input}
+              value={userData["Skills I Want"]}
+              onChangeText={(text) =>
+                setUserData({ ...userData, "Skills I Want": text })
+              }
+              placeholder="Enter skills you want to learn"
+            />
 
-        <Text style={styles.label}>Category:</Text>
-          <DropDownPicker
-            open={isLearningCategoryOpen}
-            value={learningCategory}
-            items={categoryItems}
-            setOpen={setIsLearningCategoryOpen}
-            setValue={setLearningCategory}
-            setItems={() => {}}
-            style={styles.dropdown}
-            placeholder="Select a category"
-            listMode="SCROLLVIEW"
-          />
+            <Text style={styles.label}>Category:</Text>
+            <DropDownPicker
+              open={isLearningCategoryOpen}
+              value={learningCategory}
+              items={categoryItems}
+              setOpen={setIsLearningCategoryOpen}
+              setValue={setLearningCategory}
+              setItems={() => {}}
+              style={styles.dropdown}
+              placeholder="Select a category"
+              listMode="SCROLLVIEW"
+            />
 
-        {/* Username */}
-        <Text style={styles.label}>Username:</Text>
-        <TextInput
-          style={styles.input}
-          value={userData.user_name}
-          onChangeText={(text) => setUserData({ ...userData, Username: text })}
-          placeholder="Enter your username"
-        />
+            <Text style={styles.label}>Username:</Text>
+            <TextInput
+              style={styles.input}
+              value={userData.user_name}
+              onChangeText={(text) =>
+                setUserData({ ...userData, Username: text })
+              }
+              placeholder="Enter your username"
+            />
 
-        {/* Password */}
-        <Text style={styles.label}>Password:</Text>
-        <TextInput
-          style={styles.input}
-          secureTextEntry
-          value={userData.Password}
-          onChangeText={(text) => setUserData({ ...userData, Password: text })}
-          placeholder="Enter your password"
-        />
+            <Text style={styles.label}>Password:</Text>
+            <TextInput
+              style={styles.input}
+              secureTextEntry
+              value={userData.Password}
+              onChangeText={(text) =>
+                setUserData({ ...userData, Password: text })
+              }
+              placeholder="Enter your password"
+            />
 
-        {/* Availability */}
-        <Text style={styles.label}>Availability:</Text>
-        <TextInput
-          style={styles.input}
-          value={userData.Availability}
-          onChangeText={(text) => setUserData({ ...userData, Availability: text })}
-          placeholder="e.g., Weekends"
-        />
+            <Text style={styles.label}>Availability:</Text>
+            <TextInput
+              style={styles.input}
+              value={userData.Availability}
+              onChangeText={(text) =>
+                setUserData({ ...userData, Availability: text })
+              }
+              placeholder="e.g., Weekends"
+            />
 
-        {/* Save Button */}
-        <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-          <Text style={styles.saveButtonText}>Save Changes</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+              <Text style={styles.saveButtonText}>Save Changes</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+                  <TouchableOpacity
+                    style={styles.footerButton}
+                    onPress={() => navigation.navigate("SkillRecommendationPage")}
+                  >
+                    <Image
+                      source={require("../assets/skills.png")}
+                      style={styles.footerIcon}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.footerButton}
+                    onPress={() => navigation.navigate("RecommendationPage")}
+                  >
+                    <Image
+                      source={require("../assets/items.png")}
+                      style={styles.footerIcon}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.footerButton}
+                    onPress={() => navigation.navigate("MessagingPage")}
+                  >
+                    <Image
+                      source={require("../assets/messages.png")}
+                      style={styles.footerIcon}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.footerButton}
+                    onPress={() => navigation.navigate("Editprofile")}
+                  >
+                    <Image
+                      source={require("../assets/profile.png")}
+                      style={styles.footerIcon}
+                    />
+                  </TouchableOpacity>
+                </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
@@ -208,20 +243,12 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#FFF8E1",
-    paddingTop: 20,
-    paddingHorizontal: 20,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     padding: 15,
     backgroundColor: "#335c67",
-  },
-  dropdown: {
-    marginBottom: 20,
-    borderRadius: 5,
-    borderColor: "#CCC",
-    height: 50,
   },
   backArrow: {
     fontSize: 20,
@@ -232,6 +259,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: "#FFF",
     fontWeight: "bold",
+  },
+  scrollContent: {
+    paddingTop: 6,
+    paddingHorizontal: 20,
+    paddingBottom: 70, // Space for footer
   },
   profileForm: {
     marginTop: 20,
@@ -250,6 +282,12 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     borderWidth: 1,
   },
+  dropdown: {
+    marginBottom: 20,
+    borderRadius: 5,
+    borderColor: "#CCC",
+    height: 50,
+  },
   saveButton: {
     backgroundColor: "#FFB343",
     paddingVertical: 10,
@@ -261,4 +299,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "bold",
   },
+  // footer: {
+  //   height: 70,
+  //   backgroundColor: "#335c67",
+  //   flexDirection: "row",
+  //   justifyContent: "space-around",
+  //   alignItems: "center",
+  //   position: "absolute",
+  //   bottom: 0,
+  //   left: 0,
+  //   right: 0,
+  // },
+  // footerButton: {
+  //   alignItems: "center",
+  // },
+  footer: { height: 70, backgroundColor: "#335c67", flexDirection: "row", justifyContent: "space-around", alignItems: "center", position: "absolute", bottom: 0, left: 0, right: 0 },
+  footerButton: { alignItems: "center" },
+  footerIcon: { width: 30, height: 30, tintColor: "#FFF" },
+
 });

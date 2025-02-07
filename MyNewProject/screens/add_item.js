@@ -24,9 +24,12 @@ export default function AddItemPage() {
   const [isSkillsCategoryOpen, setIsSkillsCategoryOpen] = useState(false);
   const [skillsCategory, setSkillsCategory] = useState(null);
   const categoryItems = [
-    { label: "Programming", value: "Programming" },
-    { label: "Design", value: "Design" },
-    { label: "Marketing", value: "Marketing" },
+    { label: "Books", value: "Books" },
+    { label: "Sports", value: "Sports" },
+    { label: "Electronics", value: "Electronics" },
+    { label: "Stationery", value: "Stationery" },
+    { label: "Accessories", value: "Accessories" },
+    { label: "Others", value: "Others" },
   ];
 
   const handleSave = () => {

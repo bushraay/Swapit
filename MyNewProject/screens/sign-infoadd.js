@@ -28,9 +28,13 @@ export default function InfoAddPage() {
   ]);
 
   const categoryItems = [
-    { label: "Programming", value: "Programming" },
-    { label: "Design", value: "Design" },
-    { label: "Marketing", value: "Marketing" },
+    { label: "Creative Skills", value: "Creative Skills" },
+    { label: "Culinary Skills", value: "Culinary Skills" },
+    { label: "Hobbies & Recreation", value: "Hobbies & Recreation" },
+    { label: "Languages & Communication", value: "Languages & Communication" },
+    { label: "Personal Development", value: "Personal Development" },
+    { label: "Technical Skills", value: "Technical Skills" },
+    { label: "Others", value: "Others" },
   ];
 
   useEffect(() => {
@@ -119,7 +123,7 @@ export default function InfoAddPage() {
       console.log("Sending skills data:", skillsData);
   
       const response = await axios.post(
-        "http://10.20.5.46:5000/AddSkills",
+        "http://10.20.2.150:5000/AddSkills",
         skillsData,
         { timeout: 10000 }
       );
@@ -150,7 +154,7 @@ export default function InfoAddPage() {
         };
   
         axios
-          .post("http://10.20.5.46:5000/AddSkills", skillsData, { timeout: 10000 })
+          .post("http://10.20.2.150:5000/AddSkills", skillsData, { timeout: 10000 })
           .then((res) => {
             if (res.status === 201) {
               Alert.alert("Success", res.data.message);
@@ -224,7 +228,7 @@ export default function InfoAddPage() {
       };
   
       axios
-        .post("http://10.20.6.22:5000/AddSkills", skillsData, { timeout: 10000 })
+        .post("http://10.20.2.150:5000/AddSkills", skillsData, { timeout: 10000 })
         .then((res) => {
           if (res.status === 201) {
             Alert.alert("Success", res.data.message);

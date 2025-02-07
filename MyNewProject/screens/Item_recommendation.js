@@ -29,7 +29,7 @@ export default function RecommendationPage() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await axios.get("http://192.168.0.113:5000/recommendedItems");
+        const response = await axios.get("http://10.20.2.150:5000/recommendedItems");
         if (response.data.status === "Ok") {
           setItems(response.data.data);
           setFilteredItems(response.data.data); // Initially display all items
@@ -45,6 +45,12 @@ export default function RecommendationPage() {
   const handleCategorySelect = (category) => {
     setSelectedCategory(category);
     applyFilters(category, searchQuery); // Apply filters when category changes
+  };
+
+  const getMenuItemStyle = (item) => {
+    return highlightedItem === item
+      ? { backgroundColor: "yellow",  borderRadius: 5 }
+      : {};
   };
 
   const handleSearch = (query) => {
@@ -181,6 +187,60 @@ export default function RecommendationPage() {
             />
           </TouchableOpacity>
         </View>
+        <Modal
+                  visible={menuVisible}
+                  transparent={true}
+                  animationType="slide"
+                  onRequestClose={() => setMenuVisible(false)}
+                >
+                  <View style={styles.menuOverlay}>
+                    <View style={styles.menuContainer}>
+                      <TouchableOpacity
+                        onPress={() => setMenuVisible(false)} // Close the menu
+                        style={styles.closeButton}
+                      >
+                        <Text style={styles.closeText}>Close</Text>
+                      </TouchableOpacity>
+                              {/* Menu Items */}
+                              <TouchableOpacity
+                        onPress={() => {
+                          setMenuVisible(false); // Close modal
+                          navigation.navigate("SettingsPage"); // Navigate to Settings
+                        }}
+                        style={[styles.menuItem, getMenuItemStyle("Settings")]}
+                      >
+                        <Text style={styles.menuItemText}>Settings</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setMenuVisible(false); // Close modal
+                          navigation.navigate("HistoryPage"); // Navigate to History
+                        }}
+                        style={[styles.menuItem, getMenuItemStyle("History")]}
+                      >
+                        <Text style={styles.menuItemText}>History</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setMenuVisible(false); // Close modal
+                          setPopupVisible(true); // Show popup for Help and Feedback
+                        }}
+                        style={[styles.menuItem, getMenuItemStyle("Help and Feedback")]}
+                      >
+                        <Text style={styles.menuItemText}>Review</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        onPress={() => {
+                          setMenuVisible(false); // Close modal
+                          navigation.navigate("LoginPage"); // Navigate to Login
+                        }}
+                        style={[styles.menuItem, getMenuItemStyle("Log Out")]}
+                      >
+                        <Text style={styles.menuItemText}>Log Out</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Modal>
       </SafeAreaView>
     </SafeAreaProvider>
   );
@@ -246,11 +306,18 @@ const styles = StyleSheet.create({
     borderColor: "#CCC",
   },
   filterContainer: {
-    flexDirection: "row",
-    paddingHorizontal: 4,
-    paddingBottom: 6,
-    marginBottom: 10,
-  },
+  flexDirection: "row",
+  backgroundColor: "#FFF8E1",
+  position: "absolute", // Keep the filters at a fixed position
+  top: 56, // Adjust based on the height of the header
+  zIndex: 8, // Ensure it stays on top of other content
+  width: "100%", // Full width to match the screen
+  paddingVertical: 10,
+  paddingHorizontal: 10,
+  borderBottomWidth: 1,
+  borderColor: "#CCC",
+},
+
   filterButton: {
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -272,6 +339,7 @@ const styles = StyleSheet.create({
   scrollContainer: {
     paddingHorizontal: 10,
     paddingVertical: 10,
+    marginTop: 50,
   },
   itemCard: {
     flexDirection: "row",
@@ -317,5 +385,32 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#555",
     marginTop: 20,
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-start",
+  },
+  menuContainer: {
+    backgroundColor: "#FFF",
+    padding: 20,
+    borderRadius: 10,
+    marginTop: 50, // Adjust as needed for better visibility
+    marginHorizontal: 20,
+  },
+  closeButton: {
+    alignSelf: "flex-end",
+    marginBottom: 20,
+    padding: 5,
+  },
+  closeText: {
+    fontSize: 16,
+    color: "#007B7F",
+    fontWeight: "bold",
+  },
+  menuItem: {
+    fontSize: 18,
+    color: "#333",
+    marginVertical: 10,
   },
 });

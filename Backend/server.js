@@ -314,28 +314,92 @@ app.post("/AddSkills", async (req, res) => {
 
 
 // Login
+// app.post('/Login', async (req, res) => {
+//    try {
+//       const { email, password } = req.body;
+
+//       const oldUser = await User.findOne({ email: new RegExp(`^${email}$`, 'i') }); 
+
+//       if (!oldUser) {
+//          return res.status(404).json({ message: "User doesn't exist" });
+//       }
+
+//       const isPasswordValid = await bcrypt.compare(password, oldUser.password);
+//       if (!isPasswordValid) {
+//          return res.status(401).json({ message: "Invalid password" });
+//       }
+
+//       const token = jwt.sign({ email: oldUser.email }, JWT_SECRET, { expiresIn: "1h" });
+//       res.status(200).json({ status: 'Ok', data: token });
+//    } catch (error) {
+//       console.error("Error during login:", error);
+//       res.status(500).json({ message: "Internal server error" });
+//    }
+// });
+
+app.post('/get-user-by-fullname', async (req, res) => {
+   console.log('Request Body:', req.body); // Log the request body
+   try {
+     const { fullName } = req.body;
+ 
+     if (!fullName) {
+       return res.status(400).json({ error: "Full name is required" });
+     }
+ 
+     // Find user by matching concatenated name
+     const users = await User.aggregate([
+       {
+         $addFields: {
+           fullName: { $concat: ["$f_name", " ", "$l_name"] }
+         }
+       },
+       {
+         $match: {
+           fullName: fullName
+         }
+       }
+     ]);
+ 
+     if (users.length === 0) {
+       return res.status(404).json({ error: "User  not found" });
+     }
+ 
+     res.json({ email: users[0].email });
+   } catch (error) {
+     console.error("Error fetching user by full name:", error);
+     res.status(500).json({ error: "Internal server error" });
+   }
+ });
+
 app.post('/Login', async (req, res) => {
    try {
-      const { email, password } = req.body;
-
-      const oldUser = await User.findOne({ email: new RegExp(`^${email}$`, 'i') }); 
-
-      if (!oldUser) {
-         return res.status(404).json({ message: "User doesn't exist" });
-      }
-
-      const isPasswordValid = await bcrypt.compare(password, oldUser.password);
-      if (!isPasswordValid) {
-         return res.status(401).json({ message: "Invalid password" });
-      }
-
-      const token = jwt.sign({ email: oldUser.email }, JWT_SECRET, { expiresIn: "1h" });
-      res.status(200).json({ status: 'Ok', data: token });
+     const { email, password } = req.body;
+ 
+     const oldUser = await User.findOne({ email: new RegExp(`^${email}$`, 'i') });
+ 
+     if (!oldUser) {
+       return res.status(404).json({ message: "User doesn't exist" });
+     }
+ 
+     const isPasswordValid = await bcrypt.compare(password, oldUser.password);
+     if (!isPasswordValid) {
+       return res.status(401).json({ message: "Invalid password" });
+     }
+ 
+     const token = jwt.sign({ email: oldUser.email }, JWT_SECRET, { expiresIn: "1h" });
+     res.status(200).json({
+       status: 'Ok',
+       data: {
+         token: token, // Include token here
+         user_id: oldUser._id, // Include other data if needed
+       },
+     });
    } catch (error) {
-      console.error("Error during login:", error);
-      res.status(500).json({ message: "Internal server error" });
+     console.error("Error during login:", error);
+     res.status(500).json({ message: "Internal server error" });
    }
-});
+ });
+ 
 
 // // Fetch user data
 // app.post('/userdata', async (req, res) => {

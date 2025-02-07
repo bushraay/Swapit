@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 // Define Item schema and model
 const itemSchema = new mongoose.Schema({
-  "PersonName": String,
+  "Name": String,
   "ItemName": String,
   "Category": String,
   "Condition": String,

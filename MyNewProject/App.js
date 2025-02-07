@@ -38,7 +38,7 @@ Notifications.setNotificationHandler({
 });
 
 const Stack = createStackNavigator();
-const API_URL = 'http://192.168.0.113:5000'; // Update this to your server URL
+const API_URL = 'http://10.20.2.156:5000'; // Update this to your server URL
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -108,7 +108,7 @@ export default function App() {
 
               {/* Messaging App Integration */}
               <Stack.Screen
-                name="MessagingPage"
+                name="searchmessagingPage"
                 component={MessagingApp} // Use the RootNavigator from the messaging app
                 options={{ headerShown: false }}
               />

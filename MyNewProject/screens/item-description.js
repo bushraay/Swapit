@@ -13,7 +13,6 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import { auth, database } from 'C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-//import items from "C:/Users/DELL/Documents/GitHub/fyp/Backend/items";
 
 export default function ItemDescriptionPage({ route }) {
   const navigation = useNavigation();
@@ -23,42 +22,39 @@ export default function ItemDescriptionPage({ route }) {
   const handleInterested = async () => {
     try {
       setLoading(true);
-      
-      // 1. Get owner's full name from item
-      const ownerFullName = Item.Name; // Ensure this is the correct field
-  
-      // 2. Find owner in MongoDB
-      const mongoResponse = await fetch('192.168.0.113:5000/get-user-by-fullname', {
+      const ownerFullName = item.Name; // Ensure this is correct
+      console.log('Owner Full Name:', ownerFullName);
+
+      const mongoResponse = await fetch('http://10.20.2.156:5000/get-user-by-fullname', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ fullName: ownerFullName }), // Ensure this is correct
+        body: JSON.stringify({ fullName: ownerFullName }),
       });
-  
+
       if (!mongoResponse.ok) {
-        throw new Error('Owner not found in our system');
+        const errorData = await mongoResponse.json();
+        console.error('Backend Error:', errorData);
+        throw new Error(errorData.error || 'Owner not found in our system');
       }
-  
+
       const mongoData = await mongoResponse.json();
       const ownerEmail = mongoData.email;
-  
-      // 3. Check if owner exists in Firebase
+
       const firebaseUserRef = doc(database, 'users', ownerEmail);
       const firebaseUserSnap = await getDoc(firebaseUserRef);
-      
+
       if (!firebaseUserSnap.exists()) {
         throw new Error('Owner not registered in messaging system');
       }
-  
-      // 4. Create chat ID (sorted emails)
+
       const currentUserEmail = auth.currentUser .email;
       const chatId = [currentUserEmail, ownerEmail].sort().join('_');
-  
-      // 5. Check/Create chat document
+
       const chatRef = doc(database, 'chats', chatId);
       const chatSnap = await getDoc(chatRef);
-  
+
       if (!chatSnap.exists()) {
         await setDoc(chatRef, {
           users: [
@@ -77,14 +73,17 @@ export default function ItemDescriptionPage({ route }) {
           lastUpdated: new Date()
         });
       }
-  
-      // 6. Navigate to chat
-      navigation.navigate('Chat', {
-        id: chatId,
-        chatName: firebaseUserSnap.data().name
+
+      navigation.navigate('searchmessagingpage', {
+        screen: 'Chat',
+        params: {
+          id: chatId,
+          chatName: firebaseUserSnap.data().name
+        }
       });
-  
+
     } catch (error) {
+      console.error('Full Error:', error);
       Alert.alert('Error', error.message);
     } finally {
       setLoading(false);
@@ -94,7 +93,6 @@ export default function ItemDescriptionPage({ route }) {
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
-        {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()}>
             <Text style={styles.backArrow}>{"<"}</Text>
@@ -102,7 +100,6 @@ export default function ItemDescriptionPage({ route }) {
           <Text style={styles.headerTitle}>Item Description</Text>
         </View>
 
-        {/* Content */}
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <Image source={{ uri: item.Image }} style={styles.itemImage} />
           <Text style={styles.itemTitle}>{item.ItemName}</Text>
@@ -111,7 +108,6 @@ export default function ItemDescriptionPage({ route }) {
           <Text style={styles.itemCategory}>Condition: {item.Condition}</Text>
           <Text style={styles.itemDescription}>{item.Description}</Text>
 
-          {/* Buttons */}
           <View style={styles.buttonContainer}>
             {loading ? (
               <ActivityIndicator size="large" color="#007B7F" />
@@ -134,7 +130,6 @@ export default function ItemDescriptionPage({ route }) {
           </View>
         </ScrollView>
 
-        {/* Sticky Footer */}
         <View style={styles.footer}>
           <TouchableOpacity
             style={styles.footerButton}

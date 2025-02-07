@@ -1,32 +1,91 @@
-import React from "react";
-import {
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-} from "react-native";
+import React, { useState } from "react";
+import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
+import { auth, database } from 'C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export default function SkillDescriptionPage({ route }) {
-  const { skill } = route.params || {}; // Safely destructure skill
+  const { skills } = route.params || {};
   const navigation = useNavigation();
+  const [loading, setLoading] = useState(false);
+
+  const handleInterested = async () => {
+    try {
+      setLoading(true);
+      const ownerFullName = skills.Name; // Ensure this matches the skill data structure
+      console.log('Owner Full Name:', ownerFullName);
+
+      const mongoResponse = await fetch('http://10.20.2.156:5000/get-user-by-fullname', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ fullName: ownerFullName }),
+      });
+
+      if (!mongoResponse.ok) {
+        const errorData = await mongoResponse.json();
+        console.error('Backend Error:', errorData);
+        throw new Error(errorData.error || 'Owner not found in our system');
+      }
+
+      const mongoData = await mongoResponse.json();
+      const ownerEmail = mongoData.email;
+
+      const firebaseUserRef = doc(database, 'users', ownerEmail);
+      const firebaseUserSnap = await getDoc(firebaseUserRef);
+
+      if (!firebaseUserSnap.exists()) {
+        throw new Error('Owner not registered in messaging system');
+      }
+
+      const currentUserEmail = auth.currentUser.email;
+      const chatId = [currentUserEmail, ownerEmail].sort().join('_');
+
+      const chatRef = doc(database, 'chats', chatId);
+      const chatSnap = await getDoc(chatRef);
+
+      if (!chatSnap.exists()) {
+        await setDoc(chatRef, {
+          users: [
+            {
+              email: currentUserEmail,
+              Name: auth.currentUser.displayName,
+              deletedFromChat: false
+            },
+            {
+              email: ownerEmail,
+              Name: firebaseUserSnap.data().Name,
+              deletedFromChat: false
+            }
+          ],
+          messages: [],
+          lastUpdated: new Date()
+        });
+      }
+
+      navigation.navigate('MessagingPage', {
+        screen: 'Chat',
+        params: {
+          id: chatId,
+          chatName: firebaseUserSnap.data().Name
+        }
+      });
+
+    } catch (error) {
+      console.error('Full Error:', error);
+      Alert.alert('Error', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (!skill) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <Text>No skill data available. Please go back and try again.</Text>
-        <TouchableOpacity
-          onPress={() => navigation.goBack()}
-          style={{
-            marginTop: 10,
-            padding: 10,
-            backgroundColor: '#007B7F',
-            borderRadius: 5,
-          }}
-        >
+        <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginTop: 10, padding: 10, backgroundColor: '#007B7F', borderRadius: 5, }}>
           <Text style={{ color: '#fff' }}>Go Back</Text>
         </TouchableOpacity>
       </View>
@@ -47,13 +106,13 @@ export default function SkillDescriptionPage({ route }) {
             </View>
 
             {/* Skill Icon */}
-          <View style={styles.imageContainer}>
-            {skill.Image ? (
-              <Image source={{ uri: skill.Image }} style={styles.skillIcon} />
-            ) : (
-              <Text>No image available</Text>
-            )}
-          </View>
+            <View style={styles.imageContainer}>
+              {skill.Image ? (
+                <Image source={{ uri: skill.Image }} style={styles.skillIcon} />
+              ) : (
+                <Text>No image available</Text>
+              )}
+            </View>
 
             {/* Skill Description */}
             <View style={styles.descriptionContainer}>
@@ -94,18 +153,24 @@ export default function SkillDescriptionPage({ route }) {
 
             {/* Buttons */}
             <View style={styles.buttonContainer}>
-              <TouchableOpacity
-                style={styles.interestedButton}
-                onPress={() => navigation.navigate("MessagingPage", { previousScreen: "ItemDescriptionPage" })}
-              >
-                <Text style={styles.buttonText}>Interested</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.notInterestedButton}
-                onPress={() => navigation.navigate('SkillRecommendationPage')}
-              >
-                <Text style={styles.buttonText}>Not Interested</Text>
-              </TouchableOpacity>
+              {loading ? (
+                <ActivityIndicator size="large" color="#007B7F" />
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.interestedButton}
+                    onPress={handleInterested}
+                  >
+                    <Text style={styles.buttonText}>Interested</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.notInterestedButton}
+                    onPress={() => navigation.navigate('SkillRecommendationPage')}
+                  >
+                    <Text style={styles.buttonText}>Not Interested</Text>
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </ScrollView>
 
@@ -157,25 +222,30 @@ export default function SkillDescriptionPage({ route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FFF8E1", // Light yellow background
+    backgroundColor: "#FFF8E1",
   },
   wrapper: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingBottom: 80, // Ensure space for the footer
+    paddingBottom: 80,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     padding: 15,
-    backgroundColor: "#335c67", // Darker shade for the header
+    backgroundColor: "#335c67",
   },
   backArrow: {
     fontSize: 23,
     color: "#FFF",
     marginRight: 10,
+  },
+  headerTitle: {
+    fontSize: 18,
+    color: "#FFF",
+    fontWeight: "bold",
   },
   imageContainer: {
     alignItems: "center",
@@ -194,11 +264,6 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "#335c67",
     marginBottom: 5,
-  },
-  headerTitle: {
-    fontSize: 18,
-    color: "#FFF",
-    fontWeight: "bold",
   },
   description: {
     fontSize: 16,
@@ -234,7 +299,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     alignItems: "center",
     position: "absolute",
-    top: 727,// make it dynamic
     bottom: 0,
     left: 0,
     right: 0,

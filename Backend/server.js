@@ -79,34 +79,40 @@ app.post('/CreateAccount', async (req, res) => {
 
 // Add to your backend routes
 app.post('/get-user-by-fullname', async (req, res) => {
+   console.log('Request Body:', req.body); // Log the request body
    try {
-     const { fullName } = req.body; // Expecting fullName in the request body
+     const { fullName } = req.body;
  
-     // Check if fullName is provided
      if (!fullName) {
        return res.status(400).json({ error: "Full name is required" });
      }
  
-     // Find user by concatenated first + last name
-     const user = await User.findOne({ 
-       $expr: { 
-         $eq: [
-           { $concat: ["$f_name", " ", "$l_name"] },
-           fullName
-         ]
+     // Find user by matching concatenated name
+     const users = await User.aggregate([
+       {
+         $addFields: {
+           fullName: { $concat: ["$f_name", " ", "$l_name"] }
+         }
+       },
+       {
+         $match: {
+           fullName: fullName
+         }
        }
-     });
+     ]);
  
-     if (!user) {
+     if (users.length === 0) {
        return res.status(404).json({ error: "User  not found" });
      }
  
-     res.json({ email: user.email });
+     res.json({ email: users[0].email });
    } catch (error) {
      console.error("Error fetching user by full name:", error);
      res.status(500).json({ error: "Internal server error" });
    }
  });
+
+ 
 // Add skills
 app.post("/AddSkills", async (req, res) => {
    try {
@@ -365,7 +371,7 @@ router.get('/tutorProfile/:id', async (req, res) => {
 app.get('/recommendedItems', async (req, res) => {
    try {
       const RItems = await items.find({}, {
-         PersonName: 1,
+         Name: 1,
          ItemName: 1,
          Category: 1,
          Condition: 1,

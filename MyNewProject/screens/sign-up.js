@@ -13,7 +13,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import axios from 'axios';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth, database } from "F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js"; 
+import { auth, database } from 'C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js'; 
 import { doc, setDoc } from 'firebase/firestore';
 
 export default function CreateAccountPage({ navigation }) {
@@ -80,7 +80,7 @@ export default function CreateAccountPage({ navigation }) {
   const checkEmailExists = async (email) => {
     try {
       // Check MongoDB
-      const mongoResponse = await axios.post('http://10.20.2.150/check-email', { 
+      const mongoResponse = await axios.post('http://192.168.0.113/check-email', { 
         email 
       });
       const mongoExists = mongoResponse.data.exists;

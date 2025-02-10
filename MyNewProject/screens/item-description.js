@@ -290,7 +290,7 @@ import {
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { auth, database } from "F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js";
+import { auth, database } from 'C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export default function ItemDescriptionPage({ route }) {
@@ -301,10 +301,10 @@ export default function ItemDescriptionPage({ route }) {
   const handleInterested = async () => {
     try {
       setLoading(true);
-      const ownerFullName = item.Name; // Ensure this is correct
+      const ownerFullName = item.Name; 
       console.log('Owner Full Name:', ownerFullName);
 
-      const mongoResponse = await fetch('http://10.20.2.150:5000/get-user-by-fullname', {
+      const mongoResponse = await fetch('http://192.168.0.113:5000/get-user-by-fullname', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -430,7 +430,7 @@ export default function ItemDescriptionPage({ route }) {
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.footerButton}
-            onPress={() => navigation.navigate("chatPage")}
+            onPress={() => navigation.navigate("MessagingPage", { previousScreen: "ItemDescriptionPage" })}
           >
             <Image
               source={require("../assets/messages.png")}

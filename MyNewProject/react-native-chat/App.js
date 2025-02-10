@@ -45,16 +45,30 @@ const TabNavigator = () => {
         headerShown: false,
       })}
     >
-      <Tab.Screen name="Chats" options={{ tabBarBadge: unreadCount > 0 ? unreadCount : null }}>
-        {() => <Chats setUnreadCount={setUnreadCount} />}
-      </Tab.Screen>
+      <Tab.Screen 
+      name="Chats" 
+      component={Chats} 
+      options={{ 
+        tabBarBadge: unreadCount > 0 ? unreadCount : null 
+      }}
+      />
       <Tab.Screen name="Settings" component={Settings} />
     </Tab.Navigator>
   );
 };
 
 const MainStack = ({route}) => (
-  <Stack.Navigator>
+  <Stack.Navigator
+    screenOptions={{
+      headerStyle: {
+        backgroundColor: '#335C67', // Header background color
+      },
+      headerTintColor: '#FFF8E1', // Header text and icons color
+      headerTitleStyle: {
+        fontWeight: 'bold',
+      },
+    }}
+  >
     <Stack.Screen name="Home" component={Chats} options={{ headerShown: true }} />
     <Stack.Screen
       name="Chat"

@@ -1,23 +1,34 @@
-import React, { createContext, useState, useEffect } from "react";
+import React, { createContext, useState, useEffect, useContext } from "react";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const UnreadMessagesContext = createContext();
+const UnreadMessagesContext = createContext();
 
 export const UnreadMessagesProvider = ({ children }) => {
-  const [unreadCount, setUnreadCount] = useState(0);
+  const [unreadCount, setCount] = useState(0);
 
+  // Unified method to update both context and storage
+  const setUnreadCount = async (newMessages) => {
+    try {
+      const count = Object.values(newMessages).reduce((total, num) => total + num, 0);
+      await AsyncStorage.setItem('newMessages', JSON.stringify(newMessages));
+      setCount(count);
+    } catch (error) {
+      console.log('Error updating unread count', error);
+    }
+  };
+
+  // Load initial count
   useEffect(() => {
-    const loadUnreadCount = async () => {
+    const load = async () => {
       try {
-        const storedMessages = await AsyncStorage.getItem('newMessages');
-        const newMessages = storedMessages ? JSON.parse(storedMessages) : {};
-        const count = Object.values(newMessages).reduce((total, num) => total + num, 0);
-        setUnreadCount(count);
+        const stored = await AsyncStorage.getItem('newMessages');
+        const messages = stored ? JSON.parse(stored) : {};
+        setCount(Object.values(messages).reduce((total, num) => total + num, 0));
       } catch (error) {
-        console.log('Error loading unread messages count', error);
+        console.log('Error loading unread count', error);
       }
     };
-    loadUnreadCount();
+    load();
   }, []);
 
   return (
@@ -26,3 +37,5 @@ export const UnreadMessagesProvider = ({ children }) => {
     </UnreadMessagesContext.Provider>
   );
 };
+
+export const useUnreadMessages = () => useContext(UnreadMessagesContext);

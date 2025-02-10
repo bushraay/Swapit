@@ -1,9 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import {
   SafeAreaView,
   StyleSheet,
   ScrollView,
-  Pressable,
   Alert,
   ActivityIndicator,
   Text,
@@ -19,11 +18,12 @@ import { collection, doc, where, query, onSnapshot, orderBy, setDoc, deleteDoc }
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from "../config/constants";
+import { useUnreadMessages } from "../contexts/UnreadMessagesContext"; // Add this import
 
-const Chats = ({ setUnreadCount, route }) => {
+const Chats = ({ route }) => {
+  const { setUnreadCount } = useUnreadMessages(); // Get from context
   const navigation = useNavigation();
   const [chats, setChats] = useState([]);
-  const previousScreen = route?.params?.previousScreen || 'SkillRecommendationPage';
   const [loading, setLoading] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
   const [newMessages, setNewMessages] = useState({});
@@ -32,9 +32,9 @@ const Chats = ({ setUnreadCount, route }) => {
   useEffect(() => {
     navigation.setOptions({
       headerStyle: {
-        backgroundColor: "#335c67", // Match footer color
+        backgroundColor: "#335c67",
       },
-      headerTintColor: "#FFF", // Set text/icons color to white
+      headerTintColor: "#FFF",
       headerRight: () => (
         <View style={styles.headerRightContainer}>
           <TouchableOpacity onPress={() => navigation.navigate("Settings")}>
@@ -52,22 +52,25 @@ const Chats = ({ setUnreadCount, route }) => {
 
   useFocusEffect(
     React.useCallback(() => {
-      // Load unread messages from AsyncStorage when screen is focused
       const loadNewMessages = async () => {
         try {
           const storedMessages = await AsyncStorage.getItem('newMessages');
           const parsedMessages = storedMessages ? JSON.parse(storedMessages) : {};
           setNewMessages(parsedMessages);
-          setUnreadCount(Object.values(parsedMessages).reduce((total, num) => total + num, 0));
-        } catch (error) {;
+          setUnreadCount(parsedMessages); // Use context method
+        } catch (error) {
+          console.log('Error loading messages:', error);
         }
       };
 
-      // Set up Firestore listener for chat updates
       const collectionRef = collection(database, 'chats');
       const q = query(
         collectionRef,
-        where('users', "array-contains", { email: auth?.currentUser?.email, name: auth?.currentUser?.displayName, deletedFromChat: false }),
+        where('users', "array-contains", { 
+          email: auth?.currentUser?.email, 
+          name: auth?.currentUser?.displayName, 
+          deletedFromChat: false 
+        }),
         orderBy("lastUpdated", "desc")
       );
 
@@ -81,12 +84,14 @@ const Chats = ({ setUnreadCount, route }) => {
             const messages = change.doc.data().messages;
             const firstMessage = messages[0];
 
-            // Increase unread count if the first message is from someone else
-            if (firstMessage.user._id !== auth?.currentUser?.email) {
+            if (firstMessage?.user._id !== auth?.currentUser?.email) {
               setNewMessages(prev => {
-                const updatedMessages = { ...prev, [chatId]: (prev[chatId] || 0) + 1 };
+                const updatedMessages = { 
+                  ...prev, 
+                  [chatId]: (prev[chatId] || 0) + 1 
+                };
                 AsyncStorage.setItem('newMessages', JSON.stringify(updatedMessages));
-                setUnreadCount(Object.values(updatedMessages).reduce((total, num) => total + num, 0));
+                setUnreadCount(updatedMessages); // Update context
                 return updatedMessages;
               });
             }
@@ -94,46 +99,35 @@ const Chats = ({ setUnreadCount, route }) => {
         });
       });
 
-      // Load unread messages and start listener when screen is focused
       loadNewMessages();
-
-      // Clean up listener on focus change
       return () => unsubscribe();
-    }, [])
+    }, [setUnreadCount]) // Add dependency here
   );
 
   const handleChatName = (chat) => {
     const users = chat.data().users;
     const currentUser = auth?.currentUser;
 
-    if (chat.data().groupName) {
-      return chat.data().groupName;
-    }
-
-    if (currentUser?.displayName) {
-      return users[0].name === currentUser.displayName ? users[1].name : users[0].name;
-    }
-
-    if (currentUser?.email) {
-      return users[0].email === currentUser.email ? users[1].email : users[0].email;
-    }
-
-    return '~ No Name or Email ~';
+    return chat.data().groupName || 
+      users.find(u => u.email !== currentUser?.email)?.name || 
+      '~ No Name or Email ~';
   };
 
   const handleOnPress = async (chat) => {
     const chatId = chat.id;
-    if (selectedItems.length) {
-      return selectItems(chat);
-    }
-    // Reset unread count for the selected chat
+    if (selectedItems.length) return selectItems(chat);
+
     setNewMessages(prev => {
       const updatedMessages = { ...prev, [chatId]: 0 };
       AsyncStorage.setItem('newMessages', JSON.stringify(updatedMessages));
-      setUnreadCount(Object.values(updatedMessages).reduce((total, num) => total + num, 0));
+      setUnreadCount(updatedMessages); // Update context
       return updatedMessages;
     });
-    navigation.navigate('Chat', { id: chat.id, chatName: handleChatName(chat) });
+
+    navigation.navigate('Chat', { 
+      id: chat.id, 
+      chatName: handleChatName(chat) 
+    });
   };
 
   const handleLongPress = (chat) => {
@@ -205,7 +199,7 @@ const Chats = ({ setUnreadCount, route }) => {
 
   const handleSubtitle2 = (chat) => {
     const options = { year: '2-digit', month: 'numeric', day: 'numeric' };
-    return new Date(chat.data().lastUpdated).toLocaleDateString(undefined, options);
+    return new Date(chat.data().lastUpdated).toLocaleDateString(undefined, options); // Fix locale
   };
 
   return (
@@ -253,7 +247,7 @@ const Chats = ({ setUnreadCount, route }) => {
           onPress={() => navigation.navigate("SkillRecommendationPage")}
         >
           <Image
-            source={require("F:/FYP - SwapIt/fyp/MyNewProject/assets/skills.png")}
+            source={require('C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/assets/skills.png')}
             style={styles.footerIcon}
           />
         </TouchableOpacity>
@@ -262,7 +256,7 @@ const Chats = ({ setUnreadCount, route }) => {
           onPress={() => navigation.navigate("RecommendationPage")}
         >
           <Image
-            source={require("F:/FYP - SwapIt/fyp/MyNewProject/assets/items.png")}
+            source={require('C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/assets/items.png')}
             style={styles.footerIcon}
           />
         </TouchableOpacity>
@@ -271,7 +265,7 @@ const Chats = ({ setUnreadCount, route }) => {
           onPress={() => navigation.navigate("MessagingPage", { previousScreen: 'SkillRecommendationPage' })}
         >
           <Image
-            source={require("F:/FYP - SwapIt/fyp/MyNewProject/assets/messages.png")}
+            source={require('C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/assets/messages.png')}
             style={styles.footerIcon}
           />
         </TouchableOpacity>
@@ -280,7 +274,7 @@ const Chats = ({ setUnreadCount, route }) => {
           onPress={() => navigation.navigate("Myprofile")}
         >
           <Image
-            source={require("F:/FYP - SwapIt/fyp/MyNewProject/assets/profile.png")}
+            source={require('C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/assets/profile.png')}
             style={styles.footerIcon}
           />
         </TouchableOpacity>

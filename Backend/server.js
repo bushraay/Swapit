@@ -504,7 +504,7 @@ router.get('/tutorProfile/:id', async (req, res) => {
 app.get('/recommendedItems', async (req, res) => {
    try {
       const RItems = await items.find({}, {
-         PersonName: 1,
+         Name: 1,
          ItemName: 1,
          Category: 1,
          Condition: 1,

@@ -13,7 +13,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import axios from 'axios';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth, database } from 'C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js'; 
+import { auth, database } from 'F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js'; 
 import { doc, setDoc } from 'firebase/firestore';
 
 export default function CreateAccountPage({ navigation }) {
@@ -80,7 +80,7 @@ export default function CreateAccountPage({ navigation }) {
   const checkEmailExists = async (email) => {
     try {
       // Check MongoDB
-      const mongoResponse = await axios.post('http://192.168.0.113/check-email', { 
+      const mongoResponse = await axios.post('http://10.20.6.59/check-email', { 
         email 
       });
       const mongoExists = mongoResponse.data.exists;
@@ -123,7 +123,7 @@ export default function CreateAccountPage({ navigation }) {
         password: password,
       };
   
-      const res = await axios.post("http://10.20.2.150:5000/CreateAccount", userData, {
+      const res = await axios.post("http://10.20.6.59:5000/CreateAccount", userData, {
         timeout: 20000,
       });
   
@@ -134,6 +134,8 @@ export default function CreateAccountPage({ navigation }) {
           await AsyncStorage.setItem("userEmail", userData.email);
           await AsyncStorage.setItem("userName", userData.user_name);
           await AsyncStorage.setItem("userAge", userData.age.toString());
+          await AsyncStorage.setItem("isNewUser", "true");
+
   
           Alert.alert("Success", "Account created successfully!");
           navigation.navigate("InfoAddPage");

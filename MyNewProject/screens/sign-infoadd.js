@@ -101,14 +101,22 @@ export default function InfoAddPage() {
   const handleLoginAndAddSkills = async () => {
     try {
       const userEmail = await AsyncStorage.getItem("userEmail");
-      
-      if (!userEmail) {
-        Alert.alert("Error", "User email not found. Please log in first.");
+      const userName = await AsyncStorage.getItem("userName");
+      const userAge = await AsyncStorage.getItem("userAge");
+      const isNewUser = await AsyncStorage.getItem("isNewUser");
+
+      if (isNewUser === null) isNewUser = "false"; 
+      console.log("New user:", isNewUser);
+  
+      if (!userEmail || !userName || !userAge) {
+        Alert.alert("Error", "User data not found. Please log in again.");
         return;
       }
   
       const skillsData = {
         email: userEmail,
+        name: userName,
+        age: parseInt(userAge, 10),
         skills_i_have: skillsList.map((item) => ({
           skill: item.skill,
           category: item.category,
@@ -122,67 +130,47 @@ export default function InfoAddPage() {
   
       console.log("Sending skills data:", skillsData);
   
-      const response = await axios.post(
-        "http://10.20.2.150:5000/AddSkills",
-        skillsData,
-        { timeout: 10000 }
-      );
+      try {
+        const response = await axios.post(
+          "http://10.20.6.59:5000/AddSkills",
+          skillsData,
+          { timeout: 10000 }
+        );
   
-      if (response.status === 201) {
-        Alert.alert("Success", response.data.message);
-  
-        // Check if the user is logged in
-        const isUserLoggedIn = await AsyncStorage.getItem("isLoggedIn");
-        
-        if (isUserLoggedIn === "true") {
-          // Navigate to skill dashboard if logged in
-          navigation.navigate("SkillRecommendationPage");
+        if (response.status === 201) {
+          Alert.alert("Success", response.data.message);
+          console.log("New user",isNewUser);
+          
+          if (isNewUser === "true") {
+            // If it's a new user, send them to login
+            navigation.navigate("LoginPage");
+            await AsyncStorage.removeItem("isNewUser"); // Remove flag after redirecting
+          } else {
+            // If updating skills, go to Skill Dashboard
+            navigation.navigate("SkillRecommendationPage");
+          }
         } else {
-          // Navigate to login page if not logged in
-          navigation.navigate("LoginPage");
+          Alert.alert("Error", "Failed to add skills.");
         }
+      } catch (axiosError) {
+        console.error("Axios error:", axiosError);
   
-        const skillsData = {
-          email: userEmail,
-          name: userName,
-          age: parseInt(userAge, 10),
-          skills_i_have: skillsHave,
-          category_skills_i_have: skillsCategoryHave,
-          skills_i_want: skillsWant,
-          category_skills_i_want: skillsCategoryWant,
-          availability,
-        };
-  
-        axios
-          .post("http://192.168.0.113:5000/AddSkills", skillsData, { timeout: 10000 })
-          .then((res) => {
-            if (res.status === 201) {
-              Alert.alert("Success", res.data.message);
-              navigation.navigate("LoginPage");
-            } else {
-              Alert.alert("Error", "Failed to add skills.");
-            }
-          })
-          .catch((e) => {
-            console.error(e);
-            Alert.alert("Error", "An error occurred while adding skills.");
-          });
-      } else {
-        Alert.alert("Error", "Failed to add skills.");
+        if (axiosError.response) {
+          Alert.alert("Error", `Server error: ${axiosError.response.data.message}`);
+        } else if (axiosError.request) {
+          Alert.alert("Error", "No response from the server. Check your network connection.");
+        } else {
+          Alert.alert("Error", "An unexpected error occurred while making the request.");
+        }
       }
     } catch (error) {
       console.error("Error in handleLoginAndAddSkills:", error);
-  
-      if (error.response) {
-        Alert.alert("Error", `Server error: ${error.response.data.message}`);
-      } else if (error.request) {
-        Alert.alert("Error", "No response from the server. Check your network connection.");
-      } else {
-        Alert.alert("Error", "An unexpected error occurred.");
-      }
+      Alert.alert("Error", "Something went wrong. Please try again.");
     }
   };
   
+      
+      
 
 
 
@@ -202,54 +190,56 @@ export default function InfoAddPage() {
     }
   };
 
-  const handleAddSkills = async () => {
-    try {
-      // Retrieve user data from AsyncStorage
-      // const userId = await AsyncStorage.getItem("userId");
-      const userEmail = await AsyncStorage.getItem("userEmail");
-      const userName = await AsyncStorage.getItem("userName");
-      const userAge = await AsyncStorage.getItem("userAge");
+  // const handleAddSkills = async () => {
+  //   try {
+  //     // Retrieve user data from AsyncStorage
+  //     // const userId = await AsyncStorage.getItem("userId");
+  //     const userEmail = await AsyncStorage.getItem("userEmail");
+  //     const userName = await AsyncStorage.getItem("userName");
+  //     const userAge = await AsyncStorage.getItem("userAge");
+      
   
-      if (!userEmail || !userName || !userAge) {
-        Alert.alert("Error", "User data not found. Please sign up or log in again.");
-        return;
-      }
+  //     if (!userEmail || !userName || !userAge) {
+  //       Alert.alert("Error", "User data not found. Please sign up or log in again.");
+  //       return;
+  //     }
   
-      const skillsData = {
-        user_name: userName,
-        email: userEmail, // Send email instead of user_id
-        name: userName,   // User's name from sign-up
-        age: parseInt(userAge, 10), // Convert age back to integer
-        skills_i_have: skillsHave,
-        category_skills_i_have: skillsCategoryHave,
-        skills_i_want: skillsWant,
-        category_skills_i_want: skillsCategoryWant,
-        availability,
-      };
+  //     const skillsData = {
+  //       user_name: userName,
+  //       email: userEmail, // Send email instead of user_id
+  //       name: userName,   // User's name from sign-up
+  //       age: parseInt(userAge, 10), // Convert age back to integer
+  //       skills_i_have: skillsHave,
+  //       category_skills_i_have: skillsCategoryHave,
+  //       skills_i_want: skillsWant,
+  //       category_skills_i_want: skillsCategoryWant,
+  //       availability,
+  //     };
   
-      axios
-        .post("http://192.168.0.113:5000/AddSkills", skillsData, { timeout: 10000 })
-        .then((res) => {
-          if (res.status === 201) {
-            Alert.alert("Success", res.data.message);
-            console.log("hey");
+  //     axios
+  //       .post("http://10.20.6.59:5000/AddSkills", skillsData, { timeout: 10000 })
+  //       .then((res) => {
+  //         if (res.status === 201) {
+  //           Alert.alert("Success", res.data.message);
+  //           console.log("hey");
             
-            navigation.navigate("LoginPage");
-            console.log("hey1");
+  //           navigation.navigate("LoginPage");
+  //           console.log("hey1");
             
-          } else {
-            Alert.alert("Error", "Failed to add skills.");
-          }
-        })
-        .catch((e) => {
-          console.log(e);
-          Alert.alert("Error", "An error occurred while adding skills.");
-        });
-    } catch (e) {
-      console.log(e);
-      Alert.alert("Error", "An error occurred while retrieving user data.");
-    }
-  };
+  //         } else {
+  //           Alert.alert("Error", "Failed to add skills.");
+  //         }
+  //       })
+  //       .catch((e) => {
+  //         console.log(e);
+  //         Alert.alert("Error", "An error occurred while adding skills.");
+  //       });
+  //   } catch (e) {
+  //     console.log(e);
+  //     Alert.alert("Error", "An error occurred while retrieving user data.");
+  //   }
+  // };
+
 
   return (
     <SafeAreaProvider>

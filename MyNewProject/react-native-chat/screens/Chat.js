@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -48,12 +48,42 @@ function Chat({ route }) {
   const [uploading, setUploading] = useState(false);
   const [recipientToken, setRecipientToken] = useState(null);
   const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
+  const [isTradeTypeModalVisible, setIsTradeTypeModalVisible] = useState(false);
   const [userResponse, setUserResponse] = useState(null);
+  const [tradeType, setTradeType] = useState(null);
+  const messagesRef = useRef(messages);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   const handleBackPress = useCallback(() => {
-    setIsConfirmationModalVisible(true); 
-    return true; 
-  }, []);
+    const userMessages = messagesRef.current.filter(
+      (message) => message.user._id === auth?.currentUser?.email
+    );
+
+    console.log("All messages:", messagesRef.current);
+    console.log("User messages:", userMessages);
+
+    if (userMessages.length > 0) {
+      const lastUserMessage = userMessages[0];
+      const lastMessageDate = new Date(lastUserMessage.createdAt);
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+      console.log("Last User Message Date:", lastMessageDate);
+      console.log("Three Days Ago:", threeDaysAgo);
+
+      if (lastMessageDate < threeDaysAgo) {
+        setIsConfirmationModalVisible(true);
+      } else {
+        navigation.goBack();
+      }
+    } else {
+      navigation.goBack();
+    }
+    return true;
+  }, [navigation]);
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -87,16 +117,33 @@ function Chat({ route }) {
   const handleUserResponse = (response) => {
     setUserResponse(response);
     setIsConfirmationModalVisible(false);
+
     if (response === 'Yes') {
-      navigation.goBack(); 
-    }
-    else {
+      setIsTradeTypeModalVisible(true);
+    } else {
       navigation.goBack();
+    }
   };
+
+  const handleTradeTypeResponse = (type) => {
+    setTradeType(type);
+    setIsTradeTypeModalVisible(false);
+  
+    const logData = {
+      currentUser: auth?.currentUser?.email,
+      tradedWith: route.params.id, // Assuming this is the recipient's ID
+      exchangeType: type,
+    };
+  
+    console.log('Log Data:', logData); // Optional: Log the data to the console
+  
+    // Navigate to the HistoryPage and pass the log data
+    navigation.navigate('HistoryPage', { logData });
   };
+
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(database, 'chats', route.params.id), async (document) => {
-      const recipient_email = document.data().users.find(user => user.email !== auth?.currentUser?.email).email;
+      const recipient_email = document.data().users.find(user => user.email !== auth?.currentUser ?.email).email;
       const userDocRef = doc(database, 'users', recipient_email);
       const userDocSnap = await getDoc(userDocRef);
       setRecipientToken(userDocSnap.data().token);
@@ -124,10 +171,18 @@ function Chat({ route }) {
         image: message.image ?? '',
       }));
 
-      const messagesWillSend = [{ ...m[0], sent: true, received: false }];
+      const messagesWillSend = [
+        {
+          ...m[0],
+          sent: true,
+          received: false,
+          createdAt: new Date(),
+        },
+      ];
+
       let chatMessages = GiftedChat.append(data, messagesWillSend);
 
-      setDoc(
+      await setDoc(
         doc(database, 'chats', route.params.id),
         {
           messages: chatMessages,
@@ -148,7 +203,7 @@ function Chat({ route }) {
         }
       }
     },
-    [route.params.id, messages]
+    [route.params.id, recipientToken]
   );
 
   const pickImage = async () => {
@@ -198,8 +253,8 @@ function Chat({ route }) {
             text: '',
             image: downloadUrl,
             user: {
-              _id: auth?.currentUser?.email,
-              name: auth?.currentUser?.displayName,
+              _id: auth?.currentUser ?.email,
+              name: auth?.currentUser ?.displayName,
               avatar: 'https://i.pravatar.cc/300',
             },
           },
@@ -290,7 +345,7 @@ function Chat({ route }) {
       <GiftedChat
         messages={messages}
         showAvatarForEveryMessage={false}
-        showUserAvatar={false}
+        showUser Avatar={false}
         onSend={(messages) => onSend(messages)}
         imageStyle={{ height: 212, width: 212 }}
         messagesContainerStyle={{ backgroundColor: '#FFF8E1' }}
@@ -300,8 +355,8 @@ function Chat({ route }) {
           color: '#335C67'
         }}
         user={{
-          _id: auth?.currentUser?.email,
-          name: auth?.currentUser?.displayName,
+          _id: auth?.currentUser ?.email,
+          name: auth?.currentUser ?.displayName,
           avatar: 'https://i.pravatar.cc/300',
         }}
         renderBubble={renderBubble}
@@ -332,8 +387,8 @@ function Chat({ route }) {
                 createdAt: new Date(),
                 text: emoji,
                 user: {
-                  _id: auth?.currentUser?.email,
-                  name: auth?.currentUser?.displayName,
+                  _id: auth?.currentUser ?.email,
+                  name: auth?.currentUser ?.displayName,
                   avatar: 'https://i.pravatar.cc/300',
                 },
               },
@@ -361,6 +416,30 @@ function Chat({ route }) {
               labelStyle={{ color: '#FFF8E1' }}
             >
               No
+            </Button>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal isVisible={isTradeTypeModalVisible}>
+        <View style={styles.confirmationModal}>
+          <Text style={styles.confirmationModalText}>Did you trade a skill or an item?</Text>
+          <View style={styles.confirmationModalButtons}>
+            <Button
+              mode="contained"
+              onPress={() => handleTradeTypeResponse('Skill')}
+              style={[styles.confirmationModalButton, { backgroundColor: '#007B7F' }]}
+              labelStyle={{ color: '#FFF8E1' }}
+            >
+              Skill
+            </Button>
+            <Button
+              mode="contained"
+              onPress={() => handleTradeTypeResponse('Item')}
+              style={[styles.confirmationModalButton, { backgroundColor: '#335C67' }]}
+              labelStyle={{ color: '#FFF8E1' }}
+            >
+              Item
             </Button>
           </View>
         </View>

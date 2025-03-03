@@ -38,7 +38,7 @@ Notifications.setNotificationHandler({
 });
 
 const Stack = createStackNavigator();
-const API_URL = 'http://192.168.0.113:5000'; // Update this to your server URL
+const API_URL = 'http://10.20.6.136:5000'; // Update this to your server URL
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -91,7 +91,7 @@ export default function App() {
               <Stack.Screen name="GetStartedPage" component={GetStartedPage} options={{ headerShown: false }} />
               <Stack.Screen name="LoginPage" component={LoginPage} options={{ headerShown: false }} />
               <Stack.Screen name="CreateAccountPage" component={CreateAccountPage} options={{ headerShown: false }} />
-              <Stack.Screen name="infoaddPage" component={InfoAddPage} options={{ headerShown: false }} />
+              <Stack.Screen name="InfoAddPage" component={InfoAddPage} options={{ headerShown: false }} />
               <Stack.Screen name="Myprofile" component={Myprofile} options={{ headerShown: false }} />
               <Stack.Screen name="Editprofile" component={Editprofile} options={{ headerShown: false }} />
               <Stack.Screen name="RecommendationPage" component={RecommendationPage} options={{ headerShown: false }} />

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import {
   View,
   StyleSheet,
@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GiftedChat, Bubble, Send, InputToolbar } from 'react-native-gifted-chat';
-import { auth, database } from 'C:/Users/DELL/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js';
+import { auth, database } from 'F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js';
 import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { colors } from '../config/constants';
@@ -21,6 +21,7 @@ import * as ImagePicker from 'expo-image-picker';
 import uuid from 'react-native-uuid';
 import Modal from 'react-native-modal';
 import { Button } from 'react-native-paper';
+
 
 async function sendPushNotification(expoPushToken, message, senderName) {
   const response = await fetch('https://exp.host/--/api/v2/push/send', {
@@ -33,9 +34,9 @@ async function sendPushNotification(expoPushToken, message, senderName) {
     },
     body: JSON.stringify({
       to: expoPushToken,
-      sound: 'default',
-      title: `New message from ${senderName}`,
-      body: message.text || 'Sent an image',
+      sound: `default`,
+      title: `New message from ${message.user.name || senderName}`,
+      body: message.text || `Sent an image`,
       data: { chatId: message._id },
     }),
   });
@@ -48,12 +49,43 @@ function Chat({ route }) {
   const [uploading, setUploading] = useState(false);
   const [recipientToken, setRecipientToken] = useState(null);
   const [isConfirmationModalVisible, setIsConfirmationModalVisible] = useState(false);
+  const [isTradeTypeModalVisible, setIsTradeTypeModalVisible] = useState(false);
   const [userResponse, setUserResponse] = useState(null);
+  const [tradeType, setTradeType] = useState(null);
+  const messagesRef = useRef(messages);
+  const modalTransitionRef = useRef(null);
 
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
+  
   const handleBackPress = useCallback(() => {
-    setIsConfirmationModalVisible(true); 
-    return true; 
-  }, []);
+    const userMessages = messagesRef.current.filter(
+      (message) => message.user._id === auth?.currentUser?.email
+    );
+
+    console.log("All messages:", messagesRef.current);
+    console.log("User messages:", userMessages);
+
+    if (userMessages.length > 0) {
+      const lastUserMessage = userMessages[0];
+      const lastMessageDate = new Date(lastUserMessage.createdAt);
+      const threeDaysAgo = new Date();
+      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
+
+      console.log("Last User Message Date:", lastMessageDate);
+      console.log("Three Days Ago:", threeDaysAgo);
+
+      if (lastMessageDate < threeDaysAgo) {
+        setIsConfirmationModalVisible(true);
+      } else {
+        navigation.goBack();
+      }
+    } else {
+      navigation.goBack();
+    }
+    return true;
+  }, [navigation]);
 
   useEffect(() => {
     if (Platform.OS === 'android') {
@@ -84,19 +116,104 @@ function Chat({ route }) {
     }, [handleBackPress, navigation])
   );
 
-  const handleUserResponse = (response) => {
-    setUserResponse(response);
-    setIsConfirmationModalVisible(false);
+  const handleUserResponse = useCallback((response) => {
+    console.log('handleUserResponse called with:', response);
+    
     if (response === 'Yes') {
-      navigation.goBack(); 
-    }
-    else {
+      // Clear any existing timeout
+      if (modalTransitionRef.current) {
+        clearTimeout(modalTransitionRef.current);
+      }
+      
+      // First hide the confirmation modal
+      setIsConfirmationModalVisible(false);
+      
+      // Set a ref to track the modal state
+      modalTransitionRef.current = setTimeout(() => {
+        console.log('Setting trade type modal visible');
+        setIsTradeTypeModalVisible(true);
+        modalTransitionRef.current = null;
+      }, Platform.OS === 'ios' ? 500 : 300);
+    } else {
+      setIsConfirmationModalVisible(false);
       navigation.goBack();
-  };
-  };
+    }
+    
+    setUserResponse(response);
+  }, [navigation]);
+  
+
+  // const handleTradeTypeResponse = (type) => {
+  //   setTradeType(type);
+  //   setIsTradeTypeModalVisible(false);
+  
+  //   const logData = {
+  //     currentUser: auth?.currentUser?.email,
+  //     tradedWith: route.params.id, // Assuming this is the recipient's ID
+  //     exchangeType: type,
+  //   };
+  
+  //   console.log('Log Data:', logData); // Optional: Log the data to the console
+  
+  //   // Navigate to the HistoryPage and pass the log data
+  //   navigation.navigate('HistoryPage', { logData });
+  // };
+  const handleTradeTypeResponse = useCallback(async (type) => {
+    console.log('handleTradeTypeResponse called with:', type);
+    setTradeType(type);
+    
+    // Hide the trade type modal first
+    setIsTradeTypeModalVisible(false);
+    
+    const currentUserEmail = auth?.currentUser?.email;
+    const tradedWith = route.params.email || route.params.id;
+  
+    const logData = {
+      currentUser: currentUserEmail,
+      tradedWith: tradedWith,
+      exchangeType: type,
+      timestamp: new Date().toISOString(),  // Add timestamp for tracking
+    };
+  
+    try {
+      const response = await fetch("http://10.20.1.79:5000/logdata", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(logData),
+      });
+  
+      const result = await response.json();
+      console.log("Trade logged successfully:", result);
+  
+      if (!response.ok) {
+        throw new Error("Failed to save log data");
+      }
+  
+      // Navigate after a short delay
+      setTimeout(() => {
+        navigation.navigate("HistoryPage", { refresh: true });
+      }, Platform.OS === 'ios' ? 500 : 300);
+    } catch (error) {
+      console.error("Error saving trade data:", error);
+      // Optionally show an error message to the user
+    }
+  }, [navigation, route.params]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (modalTransitionRef.current) {
+        clearTimeout(modalTransitionRef.current);
+      }
+    };
+  }, []);
+  
+  
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(database, 'chats', route.params.id), async (document) => {
-      const recipient_email = document.data().users.find(user => user.email !== auth?.currentUser?.email).email;
+      const recipient_email = document.data().users.find(user => user.email !== auth?.currentUser ?.email).email;
       const userDocRef = doc(database, 'users', recipient_email);
       const userDocSnap = await getDoc(userDocRef);
       setRecipientToken(userDocSnap.data().token);
@@ -124,10 +241,18 @@ function Chat({ route }) {
         image: message.image ?? '',
       }));
 
-      const messagesWillSend = [{ ...m[0], sent: true, received: false }];
+      const messagesWillSend = [
+        {
+          ...m[0],
+          sent: true,
+          received: false,
+          createdAt: new Date(),
+        },
+      ];
+
       let chatMessages = GiftedChat.append(data, messagesWillSend);
 
-      setDoc(
+      await setDoc(
         doc(database, 'chats', route.params.id),
         {
           messages: chatMessages,
@@ -148,7 +273,7 @@ function Chat({ route }) {
         }
       }
     },
-    [route.params.id, messages]
+    [route.params.id, recipientToken]
   );
 
   const pickImage = async () => {
@@ -164,7 +289,7 @@ function Chat({ route }) {
   };
 
   const uploadImageAsync = async (uri) => {
-    setUploading(true);
+    setUploading(false);
     const blob = await new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.onload = () => resolve(xhr.response);
@@ -172,40 +297,43 @@ function Chat({ route }) {
       xhr.responseType = 'blob';
       xhr.open('GET', uri, true);
       xhr.send(null);
+      console.log('Image URI:', uri); // Ensure the URI is correct
+
     });
     const randomString = uuid.v4();
-    const fileRef = ref(getStorage(), randomString);
+    const fileRef = ref(getStorage(), `uploads/${randomString}.jpg`); 
+
 
     const uploadTask = uploadBytesResumable(fileRef, blob);
 
     uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        console.log('Upload percent:', progress);
+  'state_changed',
+  (snapshot) => {
+    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+    console.log('Upload percent:', progress);
+  },
+  (error) => {
+    console.error('Error uploading image:', error); // Log the upload error
+    setUploading(false); // Ensure we update state
+  },
+  async () => {
+    const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+    setUploading(false);
+    onSend([
+      {
+        _id: randomString,
+        createdAt: new Date(),
+        text: '',
+        image: downloadUrl,
+        user: {
+          _id: auth?.currentUser ?.email,
+          name: auth?.currentUser ?.displayName,
+          avatar: 'https://i.pravatar.cc/300',
+        },
       },
-      (error) => {
-        console.log(error);
-        reject(error);
-      },
-      async () => {
-        const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-        setUploading(false);
-        onSend([
-          {
-            _id: randomString,
-            createdAt: new Date(),
-            text: '',
-            image: downloadUrl,
-            user: {
-              _id: auth?.currentUser?.email,
-              name: auth?.currentUser?.displayName,
-              avatar: 'https://i.pravatar.cc/300',
-            },
-          },
-        ]);
-      }
-    );
+    ]);
+  }
+);
   };
 
   const renderBubble = useMemo(
@@ -283,6 +411,10 @@ function Chat({ route }) {
     ),
     []
   );
+  useEffect(() => {
+    console.log('isTradeTypeModalVisible:', isTradeTypeModalVisible);
+  }, [isTradeTypeModalVisible]);
+  
 
   return (
     <>
@@ -290,7 +422,7 @@ function Chat({ route }) {
       <GiftedChat
         messages={messages}
         showAvatarForEveryMessage={false}
-        showUserAvatar={false}
+        showUser Avatar={false}
         onSend={(messages) => onSend(messages)}
         imageStyle={{ height: 212, width: 212 }}
         messagesContainerStyle={{ backgroundColor: '#FFF8E1' }}
@@ -300,8 +432,8 @@ function Chat({ route }) {
           color: '#335C67'
         }}
         user={{
-          _id: auth?.currentUser?.email,
-          name: auth?.currentUser?.displayName,
+          _id: auth?.currentUser ?.email,
+          name: auth?.currentUser ?.displayName,
           avatar: 'https://i.pravatar.cc/300',
         }}
         renderBubble={renderBubble}
@@ -332,8 +464,8 @@ function Chat({ route }) {
                 createdAt: new Date(),
                 text: emoji,
                 user: {
-                  _id: auth?.currentUser?.email,
-                  name: auth?.currentUser?.displayName,
+                  _id: auth?.currentUser ?.email,
+                  name: auth?.currentUser ?.displayName,
                   avatar: 'https://i.pravatar.cc/300',
                 },
               },
@@ -342,7 +474,18 @@ function Chat({ route }) {
         />
       )}
 
-      <Modal isVisible={isConfirmationModalVisible}>
+<Modal 
+        isVisible={isConfirmationModalVisible}
+        useNativeDriver={true}
+        backdropOpacity={0.5}
+        onBackdropPress={() => setIsConfirmationModalVisible(false)}
+        animationIn="fadeIn"
+        animationOut="fadeOut"
+        animationInTiming={300}
+        animationOutTiming={300}
+        backdropTransitionInTiming={300}
+        backdropTransitionOutTiming={300}
+      >
         <View style={styles.confirmationModal}>
           <Text style={styles.confirmationModalText}>Did you exchange anything?</Text>
           <View style={styles.confirmationModalButtons}>
@@ -361,6 +504,41 @@ function Chat({ route }) {
               labelStyle={{ color: '#FFF8E1' }}
             >
               No
+            </Button>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal 
+        isVisible={isTradeTypeModalVisible}
+        useNativeDriver={true}
+        backdropOpacity={0.5}
+        onBackdropPress={() => setIsTradeTypeModalVisible(false)}
+        animationIn="fadeIn"
+        animationOut="fadeOut"
+        animationInTiming={300}
+        animationOutTiming={300}
+        backdropTransitionInTiming={300}
+        backdropTransitionOutTiming={300}
+      >
+        <View style={styles.confirmationModal}>
+          <Text style={styles.confirmationModalText}>Did you trade a skill or an item?</Text>
+          <View style={styles.confirmationModalButtons}>
+            <Button
+              mode="contained"
+              onPress={() => handleTradeTypeResponse('Skill')}
+              style={[styles.confirmationModalButton, { backgroundColor: '#007B7F' }]}
+              labelStyle={{ color: '#FFF8E1' }}
+            >
+              Skill
+            </Button>
+            <Button
+              mode="contained"
+              onPress={() => handleTradeTypeResponse('Item')}
+              style={[styles.confirmationModalButton, { backgroundColor: '#335C67' }]}
+              labelStyle={{ color: '#FFF8E1' }}
+            >
+              Item
             </Button>
           </View>
         </View>

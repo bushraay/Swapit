@@ -34,7 +34,7 @@ export default function Myprofile() {
         }
 
         // Fetch the user profile using the email
-        const response = await axios.get(`http://10.20.2.150:5000/getUserProfileByEmail?email=${email}`);
+        const response = await axios.get(`http://10.20.6.136:5000/getUserProfileByEmail?email=${email}`);
         setUserData(response.data.data);  // Assuming the API returns the user data inside `data`
       } catch (err) {
         setError("Error fetching user profile");
@@ -108,13 +108,13 @@ export default function Myprofile() {
           {/* Skills Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>My Skills:</Text>
-            <Text style={styles.sectionContent}>{userData["Skills I Have"]}</Text>
+            <Text style={styles.sectionContent}>{userData["Skills_i_have"]}</Text>
           </View>
 
           {/* Learning Section */}
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Looking to Learn:</Text>
-            <Text style={styles.sectionContent}>{userData["Skills I Want"]}</Text>
+            <Text style={styles.sectionContent}>{userData["Skills_i_want"]}</Text>
           </View>
 
           {/* Reviews Section */}
@@ -129,7 +129,7 @@ export default function Myprofile() {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => navigation.navigate("infoaddPage")}
+              onPress={() => navigation.navigate("InfoaddPage")}
             >
               <Text style={styles.buttonText}>Add Skill</Text>
             </TouchableOpacity>

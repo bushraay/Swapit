@@ -13,14 +13,16 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import DropDownPicker from "react-native-dropdown-picker";
+import { storage } from "F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function AddItemPage() {
   const navigation = useNavigation();
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-  const [category, setCategory] = useState("");
-  const [condition, setCondition] = useState("");
-  const [imageUri, setImageUri] = useState("");
+  const [Name, setName] = useState("");
+  const [Description, setDescription] = useState("");
+  const [Category, setCategory] = useState("");
+  const [Condition, setCondition] = useState("");
+  const [ImageUri, setImageUri] = useState("");
   const [isSkillsCategoryOpen, setIsSkillsCategoryOpen] = useState(false);
   const [skillsCategory, setSkillsCategory] = useState(null);
   const categoryItems = [
@@ -32,17 +34,59 @@ export default function AddItemPage() {
     { label: "Others", value: "Others" },
   ];
 
-  const handleSave = () => {
-    if (!name || !description || !category || !condition || !imageUri) {
+  // const handleSave = () => {
+  //   if (!name || !description || !skillsCategory || !condition || !imageUri) {
+  //     alert("Please fill out all fields before saving.");
+  //     return;
+  //   }
+  //   if (description.split(" ").length < 20) {
+  //     alert("Description must be at least 20 words.");
+  //     return;
+  //   }
+  //   alert("Item Uploaded!");
+  // };
+  const handleSave = async () => {
+    if (!Name || !Description || !skillsCategory || !Condition || !ImageUri) {
       alert("Please fill out all fields before saving.");
       return;
     }
-    if (description.split(" ").length < 50) {
-      alert("Description must be at least 50 words.");
+    if (Description.trim().split(/\s+/).length < 20) {
+      alert("Description must be at least 20 words.");
       return;
     }
-    alert("Item Uploaded!");
+  
+    const itemData = {
+      // Name,
+      ItemName: Name,
+      Category: skillsCategory,
+      Condition,
+      Description,
+      Image: ImageUri, // Directly passing image URI for now
+    };
+  
+    try {
+      const response = await fetch("http://10.20.6.136:5000/addItem", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(itemData),
+      });
+  
+      const result = await response.json();
+  
+      if (response.status === 201) {
+        alert("Item Uploaded Successfully!");
+        navigation.goBack(); // Navigate back after success
+      } else {
+        alert(result.message);
+      }
+    } catch (error) {
+      console.error("Error uploading item:", error);
+      alert("Error uploading item. Please try again.");
+    }
   };
+  
 
   const handleUploadImage = async () => {
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -56,6 +100,7 @@ export default function AddItemPage() {
         onPress: async () => {
           const result = await ImagePicker.launchCameraAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            // mediaTypes: ImagePicker.MediaType.Images,
             allowsEditing: true,
             quality: 1,
           });
@@ -69,6 +114,7 @@ export default function AddItemPage() {
         onPress: async () => {
           const result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            // mediaTypes: ImagePicker.MediaType.Images,
             allowsEditing: true,
             quality: 1,
           });
@@ -80,6 +126,29 @@ export default function AddItemPage() {
       { text: "Cancel", style: "cancel" },
     ]);
   };
+  // const handleUploadImage = async () => {
+  //   const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  //   if (!permissionResult.granted) {
+  //     alert("Permission to access camera roll is required!");
+  //     return;
+  //   }
+  //   const result = await ImagePicker.launchImageLibraryAsync({
+  //     mediaTypes: ImagePicker.MediaTypeOptions.Images,
+  //     allowsEditing: true,
+  //     quality: 1,
+  //   });
+  
+  //   if (!result.canceled) {
+  //     const response = await fetch(result.assets[0].uri);
+  //     const blob = await response.blob();
+  
+  //     const storageRef = ref(storage, `images/${Date.now()}`);
+  //     await uploadBytes(storageRef, blob);
+  
+  //     const downloadUrl = await getDownloadURL(storageRef);
+  //     setImageUri(downloadUrl);
+  //   }
+  // };
 
   const removeImage = () => {
     setImageUri("");
@@ -101,14 +170,14 @@ export default function AddItemPage() {
           <TextInput
             style={styles.input}
             placeholder="Enter item name"
-            value={name}
+            value={Name}
             onChangeText={setName}
           />
           <Text style={styles.label}>Item Description</Text>
           <TextInput
             style={styles.input}
-            placeholder="Enter item description (Minimum 50 words)"
-            value={description}
+            placeholder="Enter item description (Minimum 20 words)"
+            value={Description}
             onChangeText={setDescription}
             multiline
           />
@@ -128,15 +197,15 @@ export default function AddItemPage() {
           <TextInput
             style={styles.input}
             placeholder="NA/10"
-            value={condition}
+            value={Condition}
             onChangeText={setCondition}
             keyboardType="numeric"
           />
           <Text style={styles.label}>Upload Image</Text>
           <TouchableOpacity style={styles.uploadButton} onPress={handleUploadImage}>
-            {imageUri ? (
+            {ImageUri ? (
               <View>
-                <Image source={{ uri: imageUri }} style={styles.uploadedImage} />
+                <Image source={{ uri: ImageUri }} style={styles.uploadedImage} />
                 <TouchableOpacity style={styles.removeButton} onPress={removeImage}>
                   <Text style={styles.removeText}>✖</Text>
                 </TouchableOpacity>

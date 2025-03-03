@@ -28,6 +28,7 @@ require('./UserDetailed');
 const User = mongoose.model("UserInfo");
 const Skills = mongoose.model("Skills");
 const MergedUser = mongoose.model( "MergedUser");
+const Item = require("./items"); 
 
 const JWT_SECRET = "hdidjnfbjsakjdhdiksmnhcujiksjieowpqlaskjdsolwopqpowidjxmmxm";
 
@@ -121,14 +122,14 @@ const bipartiteMatch = (users) => {
    let matches = [];
  
    users.forEach((user1) => {
-     const [skillsHave, skillsWant] = user1.skills;
+     const [SkillsHave, SkillsWant] = user1.Skills;
  
      users.forEach((user2) => {
        if (user1.user_id !== user2.user_id) {
-         const [skillsHave2, skillsWant2] = user2.skills;
+         const [SkillsHave2, SkillsWant2] = user2.Skills;
          
          // If user1 wants skill that user2 has, it's a match
-         if (skillsWant.some(skill => skillsHave2.includes(skill)) && skillsWant2.some(skill => skillsHave.includes(skill))) {
+         if (SkillsWant.some(skill => SkillsHave2.includes(skill)) && SkillsWant2.some(skill => SkillsHave.includes(skill))) {
            matches.push({ user1: user1.user_id, user2: user2.user_id });
          }
        }
@@ -143,12 +144,12 @@ const bipartiteMatch = (users) => {
    try {
      const users = await MergedUser.find();
      const userPreferences = users.map((user) => {
-       const skillsHave = user.skills_i_have ? user.skills_i_have.split(',') : [];
-       const skillsWant = user.skills_i_want ? user.skills_i_want.split(',') : [];
+       const SkillsHave = user.Skills_i_have ? user.Skills_i_have.split(',') : [];
+       const SkillsWant = user.Skills_i_want ? user.Skills_i_want.split(',') : [];
        
        return {
          user_id: user.user_id,
-         skills: [skillsHave, skillsWant]
+         Skills: [SkillsHave, SkillsWant]
        };
      });
  
@@ -228,89 +229,296 @@ const bipartiteMatch = (users) => {
 //    }
 // });
 
+// let nextUserId = 600;
+// // Create account
+// app.post('/CreateAccount', async (req, res) => {
+//    try {
 
-// Create account
+//       //, gender, user_id,  skills_i_want, skills_i_have,availability
+//       const { f_name, l_name, email, age, university, username, password, gender } = req.body;
+
+//       // Validate required fields
+//       if (!f_name || !l_name || !email || !age || !university || !username || !password ) {
+//         console.log("hey")
+//         console.log(f_name, l_name, email, age, university, username, password)
+//          return res.status(400).json({ message: "All fields are required" });
+
+//       }
+
+//       // Check if user already exists
+//       const oldUser = await User.findOne({ email });
+//       if (oldUser) {
+//          return res.status(400).json({ message: "User already exists" });
+//       }
+
+//       // Encrypt the password
+//       const encryptedPassword = await bcrypt.hash(password, 10);
+//       const userId = nextUserId;
+//       nextUserId++;
+//       console.log("userId", userId);
+//       console.log("next user",nextUserId);
+
+//       // Create new user
+//       const newUser = await User.create({
+//          f_name,
+//          l_name,
+//          email,
+//          age,
+//          university,
+//          username,
+//          password: encryptedPassword,
+//          user_id: userId,
+//          gender
+//       //  // From Skills collection
+//       //    user_name,
+//       //    user_id,
+//       //    gender,
+//       //    skills_i_want,
+//       //    skills_i_have,
+//       //    availability
+//             });
+
+//       res.status(201).json({ message: "User created successfully", data: newUser });
+//    } catch (error) {
+//       console.error("Error creating user:", error.message, error.stack);
+//       res.status(500).json({ message: "Internal server error" });
+//    }
+// });
+let fallbackUserId = 677; // Default starting user_id
+
+const getNextUserId = async () => {
+  try {
+      // Find the highest existing user_id
+      const lastUser = await User.findOne({}, {}, { sort: { user_id: -1 } });
+
+      let newUserId = lastUser && lastUser.user_id ? parseInt(lastUser.user_id) + 1 : fallbackUserId++;
+
+      // Ensure uniqueness by checking if the ID exists
+      while (await User.findOne({ user_id: newUserId })) {
+          newUserId++; // Increment until we find a unique ID
+      }
+
+      return newUserId;
+  } catch (error) {
+      console.error("Error generating unique user ID:", error);
+      return fallbackUserId++; // Fallback in case of error
+  }
+};
+
+
+
 app.post('/CreateAccount', async (req, res) => {
-   try {
+  try {
+     const { f_name, l_name, email, age, university, username, password, gender } = req.body;
 
-      //, gender, user_id,  skills_i_want, skills_i_have,availability
-      const { f_name, l_name, email, age, university, user_name, password } = req.body;
+     if (!f_name || !l_name || !email || !age || !university || !username || !password) {
+        return res.status(400).json({ message: "All fields are required" });
+     }
 
-      // Validate required fields
-      if (!f_name || !l_name || !email || !age || !university || !user_name || !password ) {
-         return res.status(400).json({ message: "All fields are required" });
-      }
+     // Check if user already exists
+     const oldUser = await User.findOne({ email });
+     if (oldUser) {
+        return res.status(400).json({ message: "User already exists" });
+     }
 
-      // Check if user already exists
-      const oldUser = await User.findOne({ email });
-      if (oldUser) {
-         return res.status(400).json({ message: "User already exists" });
-      }
+     // Generate unique user_id
+     const userId = await getNextUserId();
+     console.log("New unique user ID:", userId);
 
-      // Encrypt the password
-      const encryptedPassword = await bcrypt.hash(password, 10);
+     // Encrypt password
+     const encryptedPassword = await bcrypt.hash(password, 10);
 
-      // Create new user
-      const newUser = await User.create({
-         f_name,
-         l_name,
-         email,
-         age,
-         university,
-         password: encryptedPassword,
-      //  // From Skills collection
-      //    user_name,
-      //    user_id,
-      //    gender,
-      //    skills_i_want,
-      //    skills_i_have,
-      //    availability
-            });
+     // Create user in `UserInfo`
+     const newUser = await User.create({
+        f_name,
+        l_name,
+        email,
+        age: parseInt(age),
+        university,
+        username,
+        password: encryptedPassword,
+        user_id: userId,
+        gender
+     });
 
-      res.status(201).json({ message: "User created successfully", data: newUser });
-   } catch (error) {
-      console.error("Error creating user:", error.message, error.stack);
-      res.status(500).json({ message: "Internal server error" });
-   }
+     // Create user in `MergedUser`
+     await MergedUser.create({
+        f_name,
+        l_name,
+        email,
+        age: parseInt(age),
+        university,
+        username,
+        password: encryptedPassword,
+        user_id: userId,
+        gender,
+        skills_i_have: "",
+        skills_i_want: "",
+        availability: "",
+     });
+
+     res.status(201).json({ message: "User created successfully", data: newUser });
+
+  } catch (error) {
+     console.error("Error creating user:", error);
+     res.status(500).json({ message: "Internal server error", error: error.message });
+  }
 });
+
 
 // Add skills
+// app.post("/AddSkills", async (req, res) => {
+//    try {
+//        const { email, Skills_i_have, Skills_i_want, availability } = req.body;
+
+//        console.log("Request Body:", req.body); // Log received data
+
+//        // Validate input
+//        if (
+//         !email ||
+//         !Array.isArray(Skills_i_have) ||
+//         !Array.isArray(Skills_i_want) ||
+//         Skills_i_have.some(skill => !skill.Skill || !skill.category) ||
+//         Skills_i_want.some(skill => !skill.Skill || !skill.category)
+//     ) {
+//         console.error("Invalid input format:", req.body);
+//         return res.status(400).json({ message: "Invalid input format. Please provide an array of skills with categories." });
+//     }
+
+//        // Check if user exists
+//        const user = await User.findOne({ email });
+//        if (!user) {
+//            console.error("User not found for email:", email);
+//            return res.status(404).json({ message: "User not found." });
+//        }
+
+//        // Create new skill entry
+//        const newSkill = await Skills.create({
+//            user_id: user._id,
+//            Skills_i_have,
+//            Skills_i_want,
+//            availability: availability || "",
+//            email: user.email,
+//        });
+
+//        console.log("New skill added:", newSkill);
+//        res.status(201).json({ message: "Skills added successfully", data: newSkill });
+//    } catch (error) {
+//        console.error("Error in /AddSkills endpoint:", error);
+//        res.status(500).json({ message: "Internal server error" });
+//    }
+// });
+
+
+// app.post("/AddSkills", async (req, res) => {
+//    try {
+//        const { email, Skills_i_have, Skills_i_want, availability } = req.body;
+
+//        console.log("Request Body:", req.body); // Log received data
+
+//        // Validate input
+//       //  if (
+//       //      !email ||
+//       //      !Array.isArray(Skills_i_have) ||
+//       //      !Array.isArray(Skills_i_want) ||
+//       //      Skills_i_have.some(skill => !skill.Skill || !skill.category) ||
+//       //      Skills_i_want.some(skill => !skill.Skill || !skill.category)
+//       //  ) {
+//       //      console.error("Invalid input format:", req.body);
+//       //      return res.status(400).json({ message: "Invalid input format. Please provide an array of skills with categories." });
+//       //  }
+//       if (!email || !Skills_i_have || !Skills_i_want) {
+//         return res.status(400).json({ message: "Missing required fields." });
+//       }
+//        // Check if user exists
+//        const user = await User.findOne({ email });
+//        if (!user) {
+//            console.error("User not found for email:", email);
+//            return res.status(404).json({ message: "User not found." });
+//        }
+
+//        // Ensure `user_id` is an ObjectId
+//        const userId = new mongoose.Types.ObjectId(user._id);
+
+//        // Create new skill entry
+//        await Skills.create({
+//         user_id: userId,
+//         Skills_i_have: JSON.stringify(Skills_i_have),  // Convert array to string
+//         Skills_i_want: JSON.stringify(Skills_i_want),  // Convert array to string
+//         availability: availability || "",
+//         email: user.email,
+//     });
+
+//        console.log("New skill added:", newSkill);
+//        res.status(201).json({ message: "Skills added successfully", data: newSkill });
+//    } catch (error) {
+//        console.error("Error in /AddSkills endpoint:", error);
+//        res.status(500).json({ message: "Internal server error" });
+//    }
+// });
 app.post("/AddSkills", async (req, res) => {
-   try {
-       const { email, skills_i_have, skills_i_want, availability } = req.body;
+  try {
+      const { user_id, email, Skills_i_have, category_skills_i_have, Skills_i_want, category_skills_i_want, availability } = req.body;
 
-       console.log("Request Body:", req.body); // Log received data
+      if (!user_id || !email || !Skills_i_have || !category_skills_i_have || !Skills_i_want || !category_skills_i_want) {
+        return res.status(400).json({ message: "Missing required fields." });
+      }
 
-       // Validate input
-       if (!email || !skills_i_have || !skills_i_want || !Array.isArray(skills_i_have) || !Array.isArray(skills_i_want)) {
-           console.error("Invalid input:", req.body);
-           return res.status(400).json({ message: "Invalid input format." });
-       }
+      const newSkill = await Skills.create({
+          user_id: new mongoose.Types.ObjectId(user_id),
+          Skills_i_have: Skills_i_have || "",  
+          category_skills_i_have: category_skills_i_have || "",  
 
-       // Check if user exists
-       const user = await User.findOne({ email });
-       if (!user) {
-           console.error("User not found for email:", email);
-           return res.status(404).json({ message: "User not found." });
-       }
+          Skills_i_want: Skills_i_want || "",  
+          category_skills_i_want: category_skills_i_want || "",  
 
-       // Create new skill entry
-       const newSkill = await Skills.create({
-           user_id: user._id,
-           skills_i_have,
-           skills_i_want,
-           availability: availability || "",
-           email: user.email,
-       });
+          availability: availability || "",
+          email,
+      });
+      const updatedUser = await MergedUser.findOneAndUpdate(
+        { email }, 
+        { 
+          skills_i_have: Skills_i_have,
+          category_skills_i_have: category_skills_i_have,
+          skills_i_want: Skills_i_want,
+          category_skills_i_want: category_skills_i_want,
+          availability: availability 
+        },
+        { new: true } // Return updated document
+      );
 
-       console.log("New skill added:", newSkill);
-       res.status(201).json({ message: "Skills added successfully", data: newSkill });
-   } catch (error) {
-       console.error("Error in /AddSkills endpoint:", error);
-       res.status(500).json({ message: "Internal server error" });
-   }
+      res.status(201).json({ message: "Skills added successfully", data: newSkill });
+  } catch (error) {
+      console.error("Error in /AddSkills endpoint:", error);
+      res.status(500).json({ message: "Internal server error" });
+  }
 });
 
+app.post("/addItem", async (req, res) => {
+  try {
+    const {ItemName, Category, Condition, Description, Image } = req.body;
+
+    if ( !ItemName || !Category || !Condition || !Description || !Image) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
+
+    const newItem = new Item({
+      // _id: new mongoose.Types.ObjectId(_id),
+      // Name,
+      ItemName,
+      Category,
+      Condition,
+      Description,
+      Image,
+    });
+
+    await newItem.save();
+    res.status(201).json({ message: "Item added successfully", data: newItem });
+  } catch (error) {
+    console.error("Error adding item:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+});
 
 
 // Login
@@ -420,84 +628,128 @@ app.post('/Login', async (req, res) => {
 
 
 // Fetch recommended tutors
+// app.get("/recommendedTutors", async (req, res) => {
+//   try {
+//      // Use default values to handle undefined query parameters
+//      const skillsToLearn = req.query.skillsToLearn ? req.query.skillsToLearn.split(",") : [];
+//      const skillsIHave = req.query.skillsIHave ? req.query.skillsIHave.split(",") : [];
+
+//      const tutors = await Skills.find();
+//      const sortedTutors = tutors.sort((a, b) => {
+//         const aScore =
+//            (skillsToLearn.includes(a["Skills I Have"]) ? 2 : 0) +
+//            (skillsIHave.includes(a["Skills I Want"]) ? 1 : 0);
+//         const bScore =
+//            (skillsToLearn.includes(b["Skills I Have"]) ? 2 : 0) +
+//            (skillsIHave.includes(b["Skills I Want"]) ? 1 : 0);
+//         return bScore - aScore;
+//      });
+
+//      // Limit the results to the top 10 tutors
+//      const limitedTutors = sortedTutors.slice(0, 500);
+
+//      res.status(200).json({ status: "Ok", data: limitedTutors });
+//   } catch (error) {
+//      console.error("Error fetching tutors:", error);
+//      res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
 app.get("/recommendedTutors", async (req, res) => {
   try {
-     // Use default values to handle undefined query parameters
-     const skillsToLearn = req.query.skillsToLearn ? req.query.skillsToLearn.split(",") : [];
-     const skillsIHave = req.query.skillsIHave ? req.query.skillsIHave.split(",") : [];
+    const SkillsToLearn = req.query.SkillsToLearn ? req.query.SkillsToLearn.split(",") : [];
+    const SkillsIHave = req.query.SkillsIHave ? req.query.SkillsIHave.split(",") : [];
 
-     const tutors = await Skills.find();
-     const sortedTutors = tutors.sort((a, b) => {
-        const aScore =
-           (skillsToLearn.includes(a["Skills I Have"]) ? 2 : 0) +
-           (skillsIHave.includes(a["Skills I Want"]) ? 1 : 0);
-        const bScore =
-           (skillsToLearn.includes(b["Skills I Have"]) ? 2 : 0) +
-           (skillsIHave.includes(b["Skills I Want"]) ? 1 : 0);
-        return bScore - aScore;
-     });
-
-     // Limit the results to the top 10 tutors
-     const limitedTutors = sortedTutors.slice(0, 500);
-
-     res.status(200).json({ status: "Ok", data: limitedTutors });
-  } catch (error) {
-     console.error("Error fetching tutors:", error);
-     res.status(500).json({ message: "Internal server error" });
-  }
-});
-
-
-
-
-// Fetch recommended skills
-app.get('/recommendedSkills', async (req, res) => {
-  try {
-    const { search } = req.query;
-
-    // Build a dynamic search filter
-    const filter = {};
-    if (search) {
-      filter["Skills I Want"] = { $regex: search, $options: "i" }; // Case-insensitive regex search
+    // If no filters provided, return all tutors
+    let tutors;
+    if (SkillsToLearn.length === 0 && SkillsIHave.length === 0) {
+      tutors = await Skills.find(); // Return all tutors if no filters
+    } else {
+      tutors = await Skills.find({
+        $or: [
+          { "Skills_i_have.Skill": { $in: SkillsToLearn } },
+          { "Skills_i_want.Skill": { $in: SkillsIHave } }
+        ]
+      });
+      console.log("Fetched Tutors from DB:", tutors);
     }
 
-    const skills = await Skills.find(filter, { 
-      "Skills I Want": 1, 
-      "Category (Skills I Want)": 1,
-      "image": 1, 
-      _id: 0 
-    }).limit(10);
+    // Sort tutors based on matching score
+    const sortedTutors = tutors.sort((a, b) => {
+      const aScore =
+        (SkillsToLearn.includes(a["Skills I Have"]) ? 2 : 0) +
+        (SkillsIHave.includes(a["Skills I Want"]) ? 1 : 0);
+      const bScore =
+        (SkillsToLearn.includes(b["Skills I Have"]) ? 2 : 0) +
+        (SkillsIHave.includes(b["Skills I Want"]) ? 1 : 0);
+      return bScore - aScore;
+    });
 
-    res.status(200).json({ status: 'Ok', data: skills });
+    const limitedTutors = sortedTutors.slice(0, 10); // Limit results
+
+    res.status(200).json({ status: "Ok", data: limitedTutors });
   } catch (error) {
-    console.error('Error fetching skills:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    console.error("Error fetching tutors:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
 
-// Fetch tutor profile
-router.get('/tutorProfile/:id', async (req, res) => {
-   try {
-      const { id } = req.params;
-      const skillsData = await Skills.findOne({ tutorId: id });
-      const userInfo = await User.findOne({ tutorId: id });
 
-      if (!skillsData || !userInfo) {
-         return res.status(404).json({ message: 'Tutor not found' });
-      }
 
-      res.json({
-         name: userInfo.name,
-         university: userInfo.university,
-         availability: skillsData.availability,
-         skills: skillsData.skills,
-         learn: skillsData.learn,
-      });
-   } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Internal server error' });
-   }
+// // // Fetch recommended skills
+// // app.get('/recommendedSkills', async (req, res) => {
+// //   try {
+// //     const { search } = req.query;
+
+// //     // Build a dynamic search filter
+// //     const filter = {};
+// //     if (search) {
+// //       filter["Skills I Want"] = { $regex: search, $options: "i" }; // Case-insensitive regex search
+// //     }
+
+// //     const skills = await Skills.find(filter, { 
+// //       "Skills I Want": 1, 
+// //       "Category (Skills I Want)": 1,
+// //       "image": 1, 
+// //       _id: 0 
+// //     }).limit(10);
+
+// //     res.status(200).json({ status: 'Ok', data: skills });
+// //   } catch (error) {
+// //     console.error('Error fetching skills:', error);
+// //     res.status(500).json({ message: 'Internal server error' });
+// //   }
+// // });
+
+
+router.get("/tutorProfile/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Ensure id is a valid ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ message: "Invalid user ID format" });
+    }
+
+    const skillsData = await Skills.findOne({ user_id: id }); // Fix query
+    const userInfo = await User.findOne({ _id: id }); // Ensure User query is correct
+
+    if (!skillsData || !userInfo) {
+      return res.status(404).json({ message: "Tutor not found" });
+    }
+
+    res.json({
+      name: userInfo.name,
+      university: userInfo.university,
+      availability: skillsData.availability,
+      skills: skillsData.Skills_i_have, // Fix capitalization
+      learn: skillsData.Skills_i_want,
+    });
+  } catch (error) {
+    console.error("Tutor Profile API Error:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
 });
 
 // Fetch recommended items

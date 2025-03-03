@@ -44,7 +44,7 @@ export default function EditProfile() {
         }
 
         const response = await axios.get(
-          `http://10.20.2.150:5000/getUserProfileByEmail?email=${email}`
+          `http://10.20.6.136:5000/getUserProfileByEmail?email=${email}`
         );
         setUserData(response.data.data);
       } catch (err) {

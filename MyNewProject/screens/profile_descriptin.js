@@ -52,34 +52,25 @@ export default function TutorProfilePage({ route, navigation }) {
                           Availability: {tutor.availability || 'Not Available'}
                       </Text>
                   </View>
-
                   {/* Skills */}
-                  <View style={styles.section}>
-                      <Text style={styles.sectionTitle}>My Skills:</Text>
-                      {tutor["Skills I Have"] ? (
-                          tutor["Skills I Have"].split(',').map((skill, index) => (
-                              <Text key={index} style={styles.skillItem}>
-                                  • {skill.trim()}
-                              </Text>
-                          ))
-                      ) : (
-                          <Text>No skills listed</Text>
-                      )}
-                  </View>
+<View style={styles.section}>
+    <Text style={styles.sectionTitle}>My Skills:</Text>
+    <Text style={styles.skillItem}>
+        {tutor.Skills_i_have && tutor.Skills_i_have.trim() !== ""
+            ? tutor.Skills_i_have
+            : "No skills listed"}
+    </Text>
+</View>
 
-                  {/* Learning Goals */}
-                  <View style={styles.section}>
-                      <Text style={styles.sectionTitle}>Looking to Learn:</Text>
-                      {tutor["Skills I Want"] ? (
-                          tutor["Skills I Want"].split(',').map((learn, index) => (
-                              <Text key={index} style={styles.skillItem}>
-                                  • {learn.trim()}
-                              </Text>
-                          ))
-                      ) : (
-                          <Text>No learning goals listed</Text>
-                      )}
-                  </View>
+{/* Learning Goals */}
+<View style={styles.section}>
+    <Text style={styles.sectionTitle}>Looking to Learn:</Text>
+    <Text style={styles.skillItem}>
+        {tutor.Skills_i_want && tutor.Skills_i_want.trim() !== ""
+            ? tutor.Skills_i_want
+            : "No learning goals listed"}
+    </Text>
+</View>
 
                   {/* Reviews */}
                   <View style={styles.section}>

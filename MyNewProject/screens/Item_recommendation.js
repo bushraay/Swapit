@@ -29,7 +29,7 @@ export default function RecommendationPage() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await axios.get("http://192.168.0.113:5000/recommendedItems");
+        const response = await axios.get("http://10.20.6.136:5000/recommendedItems");
         if (response.data.status === "Ok") {
           setItems(response.data.data);
           setFilteredItems(response.data.data); // Initially display all items

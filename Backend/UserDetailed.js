@@ -1,20 +1,19 @@
 const mongoose = require('mongoose');
-
 const MergedUserSchema = new mongoose.Schema({
-    user_id: Number, // From Skills collection
+    user_id: Number,
     f_name: String,
     l_name: String,
-    email: String,
-    age: Number,
-    university: String,
-    user_name: String,
     gender: String,
-    skills_i_want: String,
-    skills_i_have: String,
+    age: Number,
+    skills_i_want: { type: String },  // Change from String to Array
+    category_skills_i_want: String,
+    skills_i_have: { type: String },  // Change from String to Array
+    category_skills_i_have: String,
     availability: String,
+    email: String,
+    university: String,
+    username: String,
     image: String,
 }, { collection: 'MergedCollection' });
 
 mongoose.model('MergedUser', MergedUserSchema);
-
-

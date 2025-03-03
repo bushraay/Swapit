@@ -78,7 +78,7 @@ const Profile = () => {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f9f9f9',
+        backgroundColor: '#FFF8E1', 
         alignItems: 'center',
     },
     avatarContainer: {
@@ -130,3 +130,4 @@ const styles = StyleSheet.create({
 });
 
 export default Profile;
+

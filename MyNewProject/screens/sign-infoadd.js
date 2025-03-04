@@ -98,79 +98,160 @@ export default function InfoAddPage() {
     setSkillsWantList(updatedList);
   };
 
+  // const handleLoginAndAddSkills = async () => {
+  //   try {
+  //     const userEmail = await AsyncStorage.getItem("userEmail");
+  //     // const userName = await AsyncStorage.getItem("userName");
+  //     const userAge = await AsyncStorage.getItem("userAge");
+  //     const isNewUser = await AsyncStorage.getItem("isNewUser");
+
+  //     if (isNewUser === null) isNewUser = "false"; 
+  //     console.log("New user:", isNewUser);
+  
+  //     if (!userEmail || !userAge) {
+  //       Alert.alert("Error", "User data not found. Please log in again.");
+  //       return;
+  //     }
+  
+  //     const skillsData = {
+  //       email: userEmail,
+  //       // name: userName,
+  //       age: parseInt(userAge, 10),
+  //       skills_i_have: skillsList.map((item) => ({
+  //         skill: item.skill,
+  //         category: item.category,
+  //       })),
+  //       skills_i_want: skillsWantList.map((item) => ({
+  //         skill: item.skill,
+  //         category: item.category,
+  //       })),
+  //       availability,
+  //     };
+  
+  //     console.log("Sending skills data:", skillsData);
+  
+  //     try {
+  //       const response = await axios.post(
+  //         "http://192.168.0.107:5000/AddSkills",
+  //         skillsData,
+  //         { timeout: 10000 }
+  //       );
+  
+  //       if (response.status === 201) {
+  //         Alert.alert("Success", response.data.message);
+  //         console.log("New user",isNewUser);
+          
+  //         if (isNewUser === "true") {
+  //           // If it's a new user, send them to login
+  //           navigation.navigate("LoginPage");
+  //           await AsyncStorage.removeItem("isNewUser"); // Remove flag after redirecting
+  //         } else {
+  //           // If updating skills, go to Skill Dashboard
+  //           navigation.navigate("SkillRecommendationPage");
+  //         }
+  //       } else {
+  //         Alert.alert("Error", "Failed to add skills.");
+  //       }
+  //     } catch (axiosError) {
+  //       console.error("Axios error:", axiosError);
+  
+  //       if (axiosError.response) {
+  //         Alert.alert("Error", `Server error: ${axiosError.response.data.message}`);
+  //       } else if (axiosError.request) {
+  //         Alert.alert("Error", "No response from the server. Check your network connection.");
+  //       } else {
+  //         Alert.alert("Error", "An unexpected error occurred while making the request.");
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("Error in handleLoginAndAddSkills:", error);
+  //     Alert.alert("Error", "Something went wrong. Please try again.");
+  //   }
+  // };
   const handleLoginAndAddSkills = async () => {
     try {
-      const userEmail = await AsyncStorage.getItem("userEmail");
-      const userName = await AsyncStorage.getItem("userName");
-      const userAge = await AsyncStorage.getItem("userAge");
-      const isNewUser = await AsyncStorage.getItem("isNewUser");
+        const userEmail = await AsyncStorage.getItem("userEmail");
+        const userAge = await AsyncStorage.getItem("userAge");
+        let isNewUser = await AsyncStorage.getItem("isNewUser");
+        if (isNewUser === null) isNewUser = "false"; 
 
-      if (isNewUser === null) isNewUser = "false"; 
-      console.log("New user:", isNewUser);
-  
-      if (!userEmail || !userName || !userAge) {
-        Alert.alert("Error", "User data not found. Please log in again.");
-        return;
-      }
-  
-      const skillsData = {
-        email: userEmail,
-        name: userName,
-        age: parseInt(userAge, 10),
-        skills_i_have: skillsList.map((item) => ({
-          skill: item.skill,
-          category: item.category,
-        })),
-        skills_i_want: skillsWantList.map((item) => ({
-          skill: item.skill,
-          category: item.category,
-        })),
-        availability,
+        if (!userEmail || !userAge) {
+            Alert.alert("Error", "User data not found. Please log in again.");
+            return;
+        }
+
+        // Fetch user ID from the backend before sending skill data
+        const userResponse = await axios.get(`http://10.20.4.116:5000/getUserProfileByEmail?email=${userEmail}`);
+
+        if (!userResponse.data.data || !userResponse.data.data._id) {
+            Alert.alert("Error", "User ID not found. Try logging in again.");
+            return;
+        }
+
+        const user_id = userResponse.data.data._id; // Extract user ID
+
+        const skillsData = {
+          user_id,  
+          email: userEmail,
+          age: parseInt(userAge, 10),
+      
+          Skills_i_have: skillsList
+              .map((item) => item.skill.trim())
+              .filter(skill => skill)
+              .join(","),  // Convert array to string
+      
+          category_skills_i_have: skillsList
+              .map((item) => item.category.trim())
+              .filter(category => category)
+              .join(","),
+      
+          Skills_i_want: skillsWantList
+              .map((item) => item.skill.trim())
+              .filter(skill => skill)
+              .join(","),
+      
+          category_skills_i_want: skillsWantList
+              .map((item) => item.category.trim())
+              .filter(category => category)
+              .join(","),
+      
+          availability: availability.trim(),
       };
-  
-      console.log("Sending skills data:", skillsData);
-  
-      try {
+
+        console.log("Sending skills data:", skillsData);
+
         const response = await axios.post(
-          "http://10.20.6.59:5000/AddSkills",
-          skillsData,
-          { timeout: 10000 }
+            "http://10.20.4.116:5000/AddSkills",
+            skillsData,
+            { timeout: 10000 }
         );
-  
+
         if (response.status === 201) {
-          Alert.alert("Success", response.data.message);
-          console.log("New user",isNewUser);
-          
-          if (isNewUser === "true") {
-            // If it's a new user, send them to login
-            navigation.navigate("LoginPage");
-            await AsyncStorage.removeItem("isNewUser"); // Remove flag after redirecting
-          } else {
-            // If updating skills, go to Skill Dashboard
-            navigation.navigate("SkillRecommendationPage");
-          }
+            Alert.alert("Success", response.data.message);
+            console.log("New user", isNewUser);
+
+            if (isNewUser === "true") {
+                navigation.navigate("LoginPage");
+                await AsyncStorage.removeItem("isNewUser");
+            } else {
+                navigation.navigate("SkillRecommendationPage");
+            }
         } else {
-          Alert.alert("Error", "Failed to add skills.");
+            Alert.alert("Error", "Failed to add skills.");
         }
-      } catch (axiosError) {
+    } catch (axiosError) {
         console.error("Axios error:", axiosError);
-  
+
         if (axiosError.response) {
-          Alert.alert("Error", `Server error: ${axiosError.response.data.message}`);
+            Alert.alert("Error", `Server error: ${axiosError.response.data.message}`);
         } else if (axiosError.request) {
-          Alert.alert("Error", "No response from the server. Check your network connection.");
+            Alert.alert("Error", "No response from the server. Check your network connection.");
         } else {
-          Alert.alert("Error", "An unexpected error occurred while making the request.");
+            Alert.alert("Error", "An unexpected error occurred while making the request.");
         }
-      }
-    } catch (error) {
-      console.error("Error in handleLoginAndAddSkills:", error);
-      Alert.alert("Error", "Something went wrong. Please try again.");
     }
-  };
-  
-      
-      
+};
+
 
 
 
@@ -271,40 +352,33 @@ export default function InfoAddPage() {
                   updateSkillCategoryPair(index, "skill", text)
                 }
               />
-              <DropDownPicker
-                open={item.isCategoryOpen}
-                value={item.category}
-                items={categoryItems}
-                setOpen={(open) => {
-                  const updatedList = [...skillsList];
-                  updatedList[index].isCategoryOpen = open;
-                  setSkillsList(updatedList);
-                }}
-                setValue={(callback) => {
-                  const updatedList = [...skillsList];
-                  updatedList[index].category = callback(updatedList[index].category);
-                  setSkillsList(updatedList);
-                }}
-                style={styles.dropdown}
-                placeholder="Select a category"
-                listMode="SCROLLVIEW"
-              />
-              <View style={styles.buttonGroup}>
-                <TouchableOpacity
-                  style={styles.addButton}
-                  onPress={addSkillCategoryPair}
-                >
-                  <Text style={styles.addButtonText}>+</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.removeButton}
-                  onPress={() => removeSkillCategoryPair(index)}
-                  disabled={skillsList.length === 1}
-                >
-                  <Text style={styles.removeButtonText}>-</Text>
-                </TouchableOpacity>
+              {/* setSkillsList */}
+              {/* skillsList */}
+              <View style={{ zIndex: 34000, elevation: 30000 }}>
+                <DropDownPicker
+                  open={item.isCategoryOpen}
+                  value={item.category}
+                  items={categoryItems}
+                  setOpen={(open) => {
+                    const updatedList = [...skillsList];
+                    updatedList[index].isCategoryOpen = open;
+                    setSkillsList(updatedList);
+                  }}
+                  setValue={(callback) => {
+                    const updatedList = [...skillsList];
+                    updatedList[index].category = callback(updatedList[index].category);
+                    setSkillsList(updatedList);
+                  }}
+                  style={styles.dropdown}
+                  placeholder="Select a category"
+                  listMode="SCROLLVIEW"
+                  zIndex={3000} // Ensures it appears on top
+                  zIndexInverse={1000} // Prevents overlapping with lower components
+                />
               </View>
+
             </View>
+              
           ))}
 
           {/* Skills You Want to Learn Section */}
@@ -340,7 +414,7 @@ export default function InfoAddPage() {
                 listMode="SCROLLVIEW"
               />
               <View style={styles.buttonGroup}>
-                <TouchableOpacity
+                {/* <TouchableOpacity
                   style={styles.addButton}
                   onPress={addSkillCategoryPairWant}
                 >
@@ -352,7 +426,7 @@ export default function InfoAddPage() {
                   disabled={skillsWantList.length === 1}
                 >
                   <Text style={styles.removeButtonText}>-</Text>
-                </TouchableOpacity>
+                </TouchableOpacity> */}
               </View>
             </View>
           ))}

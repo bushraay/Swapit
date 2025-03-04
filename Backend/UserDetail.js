@@ -1,27 +1,16 @@
-// schema is going to define what kind of value our detail would carry
-
-const mongoose = require("mongoose");
-
+const mongoose = require('mongoose');
 const UserDetailSchema = new mongoose.Schema({
     f_name: String,
     l_name: String,
-    email: {type: String, unique: true},
+    email: { type: String, unique: true },
     age: Number,
     university: String,
     username: { type: String, unique: true },
     password: { type: String, required: true },
-    user_id: Number, // From Skills collection
-    user_name: String,
-    gender: String,
-    skills_i_want: String,
-    skills_i_have: String,
-    availability: String,
-    image: String,
-    // re_password: String,
-
-},{
+    user_id: { type: Number, unique: true },  // Make sure this exists
+    gender: String
+}, {
     collection: "UserInfo"
-
 });
-mongoose.model("UserInfo", UserDetailSchema);
 
+mongoose.model("UserInfo", UserDetailSchema);

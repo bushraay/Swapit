@@ -14,7 +14,7 @@ import axios from 'axios';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { auth, database } from 'F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js'; 
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc,getDoc } from 'firebase/firestore';
 
 export default function CreateAccountPage({ navigation }) {
   const [firstName, setFirstName] = useState("");
@@ -41,22 +41,29 @@ export default function CreateAccountPage({ navigation }) {
       });
       console.log('Firebase profile updated');
   
-      // Add user to Firestore database
-      await setDoc(doc(database, 'users', userCredential.user.email), {
-        id: userCredential.user.uid,
-        email: userCredential.user.email,
-        name: Username,
-        about: 'Available'
-      });
-      console.log('Firestore document created');
+      const userRef = doc(database, "users", userCredential.user.uid); // Use UID as Firestore ID
+
+      const docSnap = await getDoc(userRef); // Check if the document exists
+
+      if (!docSnap.exists()) {
+        await setDoc(userRef, {
+          id: userCredential.user.uid,
+          email: userCredential.user.email,
+          name: Username,
+          about: 'Available'
+        });
+        console.log("Firestore document created");
+      } else {
+        console.log("User document already exists, skipping creation.");
+      }
   
       return true;
     } catch (error) {
-      console.log('Detailed Firebase error:', {
-        code: error.code,
-        message: error.message,
-        fullError: error
-      });
+      // console.log('Detailed Firebase error:', {
+      //   code: error.code,
+      //   message: error.message,
+      //   fullError: error
+      // });
   
       if (error.code === 'auth/email-already-in-use') {
         // You could try to delete the existing Firebase user here if needed
@@ -80,7 +87,7 @@ export default function CreateAccountPage({ navigation }) {
   const checkEmailExists = async (email) => {
     try {
       // Check MongoDB
-      const mongoResponse = await axios.post('http://10.20.6.59/check-email', { 
+      const mongoResponse = await axios.post('http://10.20.4.116/check-email', { 
         email 
       });
       const mongoExists = mongoResponse.data.exists;
@@ -119,11 +126,11 @@ export default function CreateAccountPage({ navigation }) {
         age: Age,
         university: University,
         gender: Gender,
-        user_name: Username,
+        username: Username,
         password: password,
       };
   
-      const res = await axios.post("http://10.20.6.59:5000/CreateAccount", userData, {
+      const res = await axios.post("http://10.20.4.116:5000/CreateAccount", userData, {
         timeout: 20000,
       });
   
@@ -132,10 +139,12 @@ export default function CreateAccountPage({ navigation }) {
   
         if (firebaseSuccess) {
           await AsyncStorage.setItem("userEmail", userData.email);
-          await AsyncStorage.setItem("userName", userData.user_name);
+          await AsyncStorage.setItem("userName", userData.username);
           await AsyncStorage.setItem("userAge", userData.age.toString());
           await AsyncStorage.setItem("isNewUser", "true");
 
+          const storedEmail = await AsyncStorage.getItem("userEmail");
+          console.log("Stored email in AsyncStorage:", storedEmail);
   
           Alert.alert("Success", "Account created successfully!");
           navigation.navigate("InfoAddPage");

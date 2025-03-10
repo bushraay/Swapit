@@ -552,7 +552,7 @@ export default function SkillRecommendationPage() {
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const response = await axios.get("http://10.20.4.116:5000/recommendedTutors");
+        const response = await axios.get("http://10.20.5.247:5000/recommendedTutors");
         console.log("API Response:", response.data); // Debugging
   
         if (response.data.status === "Ok" && response.data.data.length > 0) {
@@ -651,6 +651,34 @@ export default function SkillRecommendationPage() {
   //     <Text style={styles.tutorLearn}>Learn: {tutor["Skills I Want"]}</Text>
   //   </TouchableOpacity>
   // );
+
+  //RENDOR TUTOR SAHI WALA
+  // const renderTutorCard = (tutor, index) => (
+  //   <TouchableOpacity
+  //     key={index}
+  //     style={styles.tutorCard}
+  //     onPress={() => navigation.navigate("TutorProfilePage", { tutor })}
+  //   >
+  //     <Icon name="user-circle" size={50} color="#007B7F" />
+  //     <View style={{ marginTop: 13 }}>
+  //       <Text style={styles.tutorSkills}>
+  //         <Text style={styles.boldText}>Skills:</Text>
+  //         <Text style={styles.skillName}>
+  //           {Array.isArray(tutor.Skills_i_have)
+  //             ? tutor.Skills_i_have.join(", ") // Join if it's an array
+  //             : typeof tutor.Skills_i_have === "object"
+  //             ? Object.values(tutor.Skills_i_have).join("") // Convert object to string
+  //             : String(tutor.Skills_i_have)} {/* Ensure it's a string */}
+  //         </Text>
+  //       </Text>
+  //     </View>
+  //     <Text style={styles.tutorName}>{tutor.Name}</Text>
+  //     <Text style={styles.tutorLearn}>
+  //       Learn: {tutor.Skills_i_want ? String(tutor.Skills_i_want) : "N/A"}
+  //     </Text>
+  //   </TouchableOpacity>
+  // );
+
   const renderTutorCard = (tutor, index) => (
     <TouchableOpacity
       key={index}
@@ -662,20 +690,20 @@ export default function SkillRecommendationPage() {
         <Text style={styles.tutorSkills}>
           <Text style={styles.boldText}>Skills:</Text>
           <Text style={styles.skillName}>
-            {Array.isArray(tutor.Skills_i_have)
-              ? tutor.Skills_i_have.join(", ") // Join if it's an array
-              : typeof tutor.Skills_i_have === "object"
-              ? Object.values(tutor.Skills_i_have).join("") // Convert object to string
-              : String(tutor.Skills_i_have)} {/* Ensure it's a string */}
+            {tutor.skills_i_have ? tutor.skills_i_have.split(",").join(", ") : "N/A"}
           </Text>
         </Text>
       </View>
-      <Text style={styles.tutorName}>{tutor.Name}</Text>
+      <Text style={styles.tutorName}>{`${tutor.f_name} ${tutor.l_name}`}</Text>
       <Text style={styles.tutorLearn}>
-        Learn: {tutor.Skills_i_want ? String(tutor.Skills_i_want) : "N/A"}
+        Learn: {tutor.skills_i_want ? tutor.skills_i_want.split(",").join(", ") : "N/A"}
+      </Text>
+      <Text style={styles.tutorAvailability}>
+        Availability: {tutor.availability || "N/A"}
       </Text>
     </TouchableOpacity>
   );
+  
   
 
   return (

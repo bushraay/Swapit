@@ -181,7 +181,7 @@ export default function InfoAddPage() {
         }
 
         // Fetch user ID from the backend before sending skill data
-        const userResponse = await axios.get(`http://10.20.4.116:5000/getUserProfileByEmail?email=${userEmail}`);
+        const userResponse = await axios.get(`http://10.20.5.247:5000/getUserProfileByEmail?email=${userEmail}`);
 
         if (!userResponse.data.data || !userResponse.data.data._id) {
             Alert.alert("Error", "User ID not found. Try logging in again.");
@@ -221,7 +221,7 @@ export default function InfoAddPage() {
         console.log("Sending skills data:", skillsData);
 
         const response = await axios.post(
-            "http://10.20.4.116:5000/AddSkills",
+            "http://10.20.5.247:5000/AddSkills",
             skillsData,
             { timeout: 10000 }
         );
@@ -251,11 +251,60 @@ export default function InfoAddPage() {
         }
     }
 };
+const handleUpdateSkill = async () => {
+  try {
+      const userEmail = await AsyncStorage.getItem("userEmail");
 
+      if (!userEmail) {
+          Alert.alert("Error", "User data not found. Please log in again.");
+          return;
+      }
 
+      // Ensure skillsList is not null or empty
+      if (!skillsList || skillsList.length === 0 || !skillsList[0]) {
+          Alert.alert("Error", "Please enter a skill.");
+          return;
+      }
 
+      // Extract skill and category safely
+      const skill = skillsList[0]?.skill ? skillsList[0].skill.trim() : "";
+      const category = skillsList[0]?.category ? skillsList[0].category.trim() : "";
 
-  const handlePortfolioSelect = async () => {
+      if (!skill || !category) {
+          Alert.alert("Error", "Skill and category are required.");
+          return;
+      }
+
+      const skillData = {
+          email: userEmail,
+          newSkill: skill,
+          newCategory: category,
+          availability: availability ? availability.trim() : "",
+      };
+
+      console.log("Sending skill data:", skillData);  // Debugging output
+
+      const response = await axios.post("http://10.20.5.247:5000/UpdateSkill", skillData);
+
+      if (response.status === 200) {
+          Alert.alert("Success", "Skill updated successfully!");
+          navigation.navigate("SkillRecommendationPage");
+      } else {
+          Alert.alert("Error", "Failed to update skill.");
+      }
+  } catch (error) {
+      console.error("Error updating skill:", error);
+
+      if (error.response) {
+          Alert.alert("Error", `Server error: ${error.response.data.message}`);
+      } else if (error.request) {
+          Alert.alert("Error", "No response from server. Check your network.");
+      } else {
+          Alert.alert("Error", "An unexpected error occurred.");
+      }
+  }
+};
+const handlePortfolioSelect = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
         type: "application/pdf",

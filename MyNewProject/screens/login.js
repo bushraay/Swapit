@@ -13,7 +13,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 
-import { auth } from 'F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js';
+import { auth } from 'C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js';
 
 const LoginPage = ({ navigation }) => {
   const [email, setEmail] = useState("");
@@ -39,7 +39,7 @@ const LoginPage = ({ navigation }) => {
     try {
       const userData = { email, password };
       const res = await axios.post(
-        "http://10.20.4.116:5000/Login",
+        "http://10.20.5.247:5000/Login",
         userData,
         { timeout: 10000 }
       );

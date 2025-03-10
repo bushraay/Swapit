@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { StyleSheet, Text, View, TouchableOpacity, Image, ScrollView, ActivityIndicator, Alert } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { auth, database } from 'F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js';
+import { auth, database } from 'C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export default function SkillDescriptionPage({ route }) {
@@ -16,7 +16,7 @@ export default function SkillDescriptionPage({ route }) {
       const ownerFullName = skill.name; // Ensure this matches the skill data structure
       console.log('Owner Full Name:', ownerFullName);
 
-      const mongoResponse = await fetch('http://10.20.4.116:5000/get-user-by-fullname', {
+      const mongoResponse = await fetch('http://10.20.5.247:5000/get-user-by-fullname', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

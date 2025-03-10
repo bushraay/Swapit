@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const items = require('./items');
+const LogData = require('./LogData');
 const router = express.Router();
 // const Item = require('./item');
 
@@ -89,76 +90,160 @@ app.post('/check-email', async (req, res) => {
 // });
 
 // API to get user by email
+
 app.get('/getUserProfileByEmail', async (req, res) => {
    try {
       const { email } = req.query;
-
+ 
       if (!email) {
          return res.status(400).json({ message: "Email is required" });
       }
-
+ 
       const user = await MergedUser.findOne({ email });
-
+ 
       if (!user) {
          return res.status(404).json({ message: "User not found" });
       }
-
+ 
       res.status(200).json({
-         status: "Ok",
-         data: user
-      });
-
+        status: "Ok",
+        data: {
+           _id: user._id, // Include user ID here
+           Name: `${user.f_name} ${user.l_name}`,
+           university: user.university,
+           "Skills I Have": user.skills_i_have,
+           "Skills I Want": user.skills_i_want,
+           Availability: user.availability,
+           image: user.image
+        }
+     });
+     
+ 
    } catch (error) {
       console.error("Error fetching user profile:", error);
       res.status(500).json({ message: "Internal server error" });
    }
-});
-
-
-// bipartite
-
-// Function to perform bipartite matching
-const bipartiteMatch = (users) => {
-   let matches = [];
+ });
  
-   users.forEach((user1) => {
-     const [SkillsHave, SkillsWant] = user1.Skills;
+
+
+// // bipartite
+
+// // Function to perform bipartite matching
+// const bipartiteMatch = (users) => {
+//    let matches = [];
  
-     users.forEach((user2) => {
-       if (user1.user_id !== user2.user_id) {
-         const [SkillsHave2, SkillsWant2] = user2.Skills;
+//    users.forEach((user1) => {
+//      const [SkillsHave, SkillsWant] = user1.Skills;
+ 
+//      users.forEach((user2) => {
+//        if (user1.user_id !== user2.user_id) {
+//          const [SkillsHave2, SkillsWant2] = user2.Skills;
          
-         // If user1 wants skill that user2 has, it's a match
-         if (SkillsWant.some(skill => SkillsHave2.includes(skill)) && SkillsWant2.some(skill => SkillsHave.includes(skill))) {
-           matches.push({ user1: user1.user_id, user2: user2.user_id });
-         }
-       }
-     });
-   });
+//          // If user1 wants skill that user2 has, it's a match
+//          if (SkillsWant.some(skill => SkillsHave2.includes(skill)) && SkillsWant2.some(skill => SkillsHave.includes(skill))) {
+//            matches.push({ user1: user1.user_id, user2: user2.user_id });
+//          }
+//        }
+//      });
+//    });
  
-   return matches;
- };
+//    return matches;
+//  };
  
- // Endpoint to fetch user preferences and apply bipartite matching
- app.get("/userPreferences", async (req, res) => {
-   try {
-     const users = await MergedUser.find();
-     const userPreferences = users.map((user) => {
-       const SkillsHave = user.Skills_i_have ? user.Skills_i_have.split(',') : [];
-       const SkillsWant = user.Skills_i_want ? user.Skills_i_want.split(',') : [];
+//  // Endpoint to fetch user preferences and apply bipartite matching
+//  app.get("/userPreferences", async (req, res) => {
+//    try {
+//      const users = await MergedUser.find();
+//      const userPreferences = users.map((user) => {
+//        const SkillsHave = user.Skills_i_have ? user.Skills_i_have.split(',') : [];
+//        const SkillsWant = user.Skills_i_want ? user.Skills_i_want.split(',') : [];
        
-       return {
-         user_id: user.user_id,
-         Skills: [SkillsHave, SkillsWant]
-       };
-     });
+//        return {
+//          user_id: user.user_id,
+//          Skills: [SkillsHave, SkillsWant]
+//        };
+//      });
  
-     const matches = bipartiteMatch(userPreferences);
-     res.json({ userPreferences, matches });
-   } catch (err) {
-     res.status(500).json({ error: err.message });
+//      const matches = bipartiteMatch(userPreferences);
+//      res.json({ userPreferences, matches });
+//    } catch (err) {
+//      res.status(500).json({ error: err.message });
+//    }
+//  });
+ 
+
+// Save exchange history
+app.get('/logdata', async (req, res) => {
+   try {
+     console.log("Incoming request for history:", req.query);
+ 
+     const { email } = req.query;
+ 
+     if (!email) {
+       console.error(" Error: Email is required!");
+       return res.status(400).json({ message: "Email is required" });
+     }
+ 
+     console.log('Fetching history for user: ${email})');
+ 
+     const history = await LogData.find({ currentUser: email }).sort({ createdAt: -1 });
+ 
+     console.log(" Retrieved history:", history);
+ 
+     res.status(200).json({ status: "Ok", data: history });
+ 
+   } catch (error) {
+     console.error(" Error fetching history:", error);
+     res.status(500).json({ message: "Internal server error" });
    }
  });
+ 
+ app.post('/logdata', async (req, res) => {
+   try {
+     console.log("📌 Incoming request to save trade:", req.body);
+ 
+     const { currentUser, tradedWith, exchangeType } = req.body;
+ 
+     if (!currentUser || !tradedWith || !exchangeType) {
+       console.error("❌ Missing required fields!");
+       return res.status(400).json({ message: "All fields are required" });
+     }
+ 
+     const newLogData = new LogData({
+       currentUser,
+       tradedWith,
+       exchangeType,
+     });
+ 
+     await newLogData.save();
+     console.log("✅ Trade successfully saved:", newLogData);
+ 
+     res.status(201).json({ message: "Trade saved", data: newLogData });
+   } catch (error) {
+     console.error("❌ Error saving trade data:", error);
+     res.status(500).json({ message: "Internal server error" });
+   }
+ });
+ 
+ // API to fetch user email by ID
+ app.get("/user/:id", async (req, res) => {
+   try {
+       const userId = req.params.id;
+       const user = await User.findById(userId).select("email"); // Only fetch email
+ 
+       if (!user) {
+           return res.status(404).json({ message: "User not found" });
+       }
+ 
+       res.status(200).json({ email: user.email });
+   } catch (error) {
+       console.error("❌ Error fetching user email:", error);
+       res.status(500).json({ message: "Internal server error" });
+   }
+ });
+ 
+ // API to fetch exchange history for a user
  
 
 // //user id se
@@ -458,43 +543,277 @@ app.post('/CreateAccount', async (req, res) => {
 //        res.status(500).json({ message: "Internal server error" });
 //    }
 // });
+
+//sahi wala add skills
+// app.post("/AddSkills", async (req, res) => {
+//   try {
+//       const { user_id, email, Skills_i_have, category_skills_i_have, Skills_i_want, category_skills_i_want, availability } = req.body;
+
+//       if (!user_id || !email || !Skills_i_have || !category_skills_i_have || !Skills_i_want || !category_skills_i_want) {
+//         return res.status(400).json({ message: "Missing required fields." });
+//       }
+
+//       const newSkill = await Skills.create({
+//           user_id: new mongoose.Types.ObjectId(user_id),
+//           Skills_i_have: Skills_i_have || "",  
+//           category_skills_i_have: category_skills_i_have || "",  
+
+//           Skills_i_want: Skills_i_want || "",  
+//           category_skills_i_want: category_skills_i_want || "",  
+
+//           availability: availability || "",
+//           email,
+//       });
+//       const updatedUser = await MergedUser.findOneAndUpdate(
+//         { email }, 
+//         { 
+//           skills_i_have: Skills_i_have,
+//           category_skills_i_have: category_skills_i_have,
+//           skills_i_want: Skills_i_want,
+//           category_skills_i_want: category_skills_i_want,
+//           availability: availability 
+//         },
+//         { new: true } // Return updated document
+//       );
+
+//       res.status(201).json({ message: "Skills added successfully", data: newSkill });
+//   } catch (error) {
+//       console.error("Error in /AddSkills endpoint:", error);
+//       res.status(500).json({ message: "Internal server error" });
+//   }
+// });
 app.post("/AddSkills", async (req, res) => {
   try {
       const { user_id, email, Skills_i_have, category_skills_i_have, Skills_i_want, category_skills_i_want, availability } = req.body;
 
       if (!user_id || !email || !Skills_i_have || !category_skills_i_have || !Skills_i_want || !category_skills_i_want) {
-        return res.status(400).json({ message: "Missing required fields." });
+          return res.status(400).json({ message: "Missing required fields." });
       }
 
-      const newSkill = await Skills.create({
-          user_id: new mongoose.Types.ObjectId(user_id),
-          Skills_i_have: Skills_i_have || "",  
-          category_skills_i_have: category_skills_i_have || "",  
+      // Check if the user already has skills
+      const existingSkill = await Skills.findOne({ email });
 
-          Skills_i_want: Skills_i_want || "",  
-          category_skills_i_want: category_skills_i_want || "",  
+      if (existingSkill) {
+          // ✅ Update `Skills` collection
+          await Skills.findOneAndUpdate(
+              { email },
+              {
+                  $set: {
+                      Skills_i_have,
+                      category_skills_i_have,
+                      Skills_i_want,
+                      category_skills_i_want,
+                      availability,
+                  },
+              },
+              { new: true }
+          );
 
-          availability: availability || "",
-          email,
-      });
-      const updatedUser = await MergedUser.findOneAndUpdate(
-        { email }, 
-        { 
-          skills_i_have: Skills_i_have,
-          category_skills_i_have: category_skills_i_have,
-          skills_i_want: Skills_i_want,
-          category_skills_i_want: category_skills_i_want,
-          availability: availability 
-        },
-        { new: true } // Return updated document
-      );
+          // ✅ Update `MergedUser` collection
+          await MergedUser.findOneAndUpdate(
+              { email },
+              {
+                  $set: {
+                      skills_i_have: Skills_i_have,
+                      category_skills_i_have: category_skills_i_have,
+                      skills_i_want: Skills_i_want,
+                      category_skills_i_want: category_skills_i_want,
+                      availability,
+                  },
+              },
+              { new: true }
+          );
 
-      res.status(201).json({ message: "Skills added successfully", data: newSkill });
+          res.status(200).json({ message: "Skills updated successfully in both collections" });
+      } else {
+          // ✅ Create new entry in `Skills`
+          await Skills.create({
+              user_id: new mongoose.Types.ObjectId(user_id),
+              Skills_i_have,
+              category_skills_i_have,
+              Skills_i_want,
+              category_skills_i_want,
+              availability,
+              email,
+          });
+
+          // ✅ Ensure MergedUser is updated
+          await MergedUser.findOneAndUpdate(
+              { email },
+              {
+                  $set: {
+                      skills_i_have: Skills_i_have,
+                      category_skills_i_have: category_skills_i_have,
+                      skills_i_want: Skills_i_want,
+                      category_skills_i_want: category_skills_i_want,
+                      availability,
+                  },
+              },
+              { new: true }
+          );
+
+          res.status(201).json({ message: "Skills added successfully in both collections" });
+      }
   } catch (error) {
       console.error("Error in /AddSkills endpoint:", error);
       res.status(500).json({ message: "Internal server error" });
   }
 });
+
+//  app.post("/UpdateSkill", async (req, res) => {
+//   try {
+//       const { email, newSkill, newCategory, availability } = req.body;
+
+//       if (!email || !newSkill || !newCategory) {
+//           return res.status(400).json({ message: "Missing required fields." });
+//       }
+
+//       // Check if user exists
+//       const user = await Skills.findOne({ email });
+
+//       if (!user) {
+//           return res.status(404).json({ message: "User not found." });
+//       }
+
+//       // Update skill for the existing user
+//       await Skills.findOneAndUpdate(
+//           { email },  // Find by email
+//           {
+//               $set: {
+//                   Skills_i_have: newSkill,
+//                   category_skills_i_have: newCategory,
+//                   availability: availability || user.availability,
+//               },
+//           },
+//           { new: true } // Return the updated document
+//       );
+
+//       // Also update MergedUser collection
+//       await MergedUser.findOneAndUpdate(
+//           { email },
+//           {
+//               $set: {
+//                   skills_i_have: newSkill,
+//                   category_skills_i_have: newCategory,
+//                   availability: availability || user.availability,
+//               },
+//           },
+//           { new: true }
+//       );
+
+//       res.status(200).json({ message: "Skill updated successfully" });
+//   } catch (error) {
+//       console.error("Error updating skill:", error);
+//       res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+app.post("/UpdateSkill", async (req, res) => {
+  try {
+      const { email, newSkillHave, newCategoryHave, newSkillWant, newCategoryWant, availability } = req.body;
+
+      if (!email || !newSkillHave || !newCategoryHave || !newSkillWant || !newCategoryWant) {
+          return res.status(400).json({ message: "Missing required fields." });
+      }
+
+      // Check if user exists in `Skills` collection
+      const userSkill = await Skills.findOne({ email });
+
+      if (!userSkill) {
+          return res.status(404).json({ message: "User not found in Skills collection." });
+      }
+
+      // ✅ Update `Skills` collection
+      await Skills.findOneAndUpdate(
+          { email },
+          {
+              $set: {
+                  Skills_i_have: newSkillHave,
+                  category_skills_i_have: newCategoryHave,
+                  Skills_i_want: newSkillWant,
+                  category_skills_i_want: newCategoryWant,
+                  availability: availability || userSkill.availability,
+              },
+          },
+          { new: true }
+      );
+
+      // ✅ Update `MergedUser` collection
+      const userMerged = await MergedUser.findOne({ email });
+
+      if (!userMerged) {
+          return res.status(404).json({ message: "User not found in MergedUser collection." });
+      }
+
+      await MergedUser.findOneAndUpdate(
+          { email },
+          {
+              $set: {
+                  skills_i_have: newSkillHave,
+                  category_skills_i_have: newCategoryHave,
+                  skills_i_want: newSkillWant,
+                  category_skills_i_want: newCategoryWant,
+                  availability: availability || userMerged.availability,
+              },
+          },
+          { new: true }
+      );
+
+      res.status(200).json({ message: "Skill updated successfully in both collections" });
+  } catch (error) {
+      console.error("Error updating skill:", error);
+      res.status(500).json({ message: "Internal server error" });
+  }
+});
+app.post("/DeleteSkill", async (req, res) => {
+  try {
+      const { email } = req.body;
+
+      if (!email) {
+          return res.status(400).json({ message: "Email is required." });
+      }
+
+      // Ensure the user exists
+      const user = await Skills.findOne({ email });
+      if (!user) {
+          return res.status(404).json({ message: "User not found." });
+      }
+
+      // Remove skills from Skills collection
+      await Skills.updateOne(
+          { email },
+          {
+              $set: {
+                  Skills_i_have: "Not available at this moment",
+                  category_skills_i_have: "Not available at this moment",
+                  Skills_i_want: "Not available at this moment",
+                  category_skills_i_want: "Not available at this moment",
+                  availability: "Not available at this moment",
+              },
+          }
+      );
+
+      // Remove skills from MergedUser collection
+      await MergedUser.updateOne(
+          { email },
+          {
+              $set: {
+                  skills_i_have: "Not available at this moment",
+                  category_skills_i_have: "Not available at this moment",
+                  skills_i_want: "Not available at this moment",
+                  category_skills_i_want: "Not available at this moment",
+                  availability: "Not available at this moment",
+              },
+          }
+      );
+
+      res.status(200).json({ message: "Skills deleted successfully and marked as 'Not available at this moment'" });
+  } catch (error) {
+      console.error("Error deleting skill:", error);
+      res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+
 
 app.post("/addItem", async (req, res) => {
   try {
@@ -657,33 +976,98 @@ app.post('/Login', async (req, res) => {
 //   }
 // });
 
+
+//sahi walaaa recommend
+// app.get("/recommendedTutors", async (req, res) => {
+//   try {
+//     const SkillsToLearn = req.query.SkillsToLearn ? req.query.SkillsToLearn.split(",") : [];
+//     const SkillsIHave = req.query.SkillsIHave ? req.query.SkillsIHave.split(",") : [];
+
+//     // If no filters provided, return all tutors
+//     let tutors;
+//     if (SkillsToLearn.length === 0 && SkillsIHave.length === 0) {
+//       tutors = await Skills.find(); // Return all tutors if no filters
+//     } else {
+//       tutors = await Skills.find({
+//         $or: [
+//           { "Skills_i_have.Skill": { $in: SkillsToLearn } },
+//           { "Skills_i_want.Skill": { $in: SkillsIHave } }
+//         ]
+//       });
+//       console.log("Fetched Tutors from DB:", tutors);
+//     }
+
+//     // Sort tutors based on matching score
+//     const sortedTutors = tutors.sort((a, b) => {
+//       const aScore =
+//         (SkillsToLearn.includes(a["Skills I Have"]) ? 2 : 0) +
+//         (SkillsIHave.includes(a["Skills I Want"]) ? 1 : 0);
+//       const bScore =
+//         (SkillsToLearn.includes(b["Skills I Have"]) ? 2 : 0) +
+//         (SkillsIHave.includes(b["Skills I Want"]) ? 1 : 0);
+//       return bScore - aScore;
+//     });
+
+//     const limitedTutors = sortedTutors.slice(0, 10); // Limit results
+
+//     res.status(200).json({ status: "Ok", data: limitedTutors });
+//   } catch (error) {
+//     console.error("Error fetching tutors:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
 app.get("/recommendedTutors", async (req, res) => {
   try {
     const SkillsToLearn = req.query.SkillsToLearn ? req.query.SkillsToLearn.split(",") : [];
     const SkillsIHave = req.query.SkillsIHave ? req.query.SkillsIHave.split(",") : [];
 
-    // If no filters provided, return all tutors
     let tutors;
+    
     if (SkillsToLearn.length === 0 && SkillsIHave.length === 0) {
-      tutors = await Skills.find(); // Return all tutors if no filters
-    } else {
-      tutors = await Skills.find({
-        $or: [
-          { "Skills_i_have.Skill": { $in: SkillsToLearn } },
-          { "Skills_i_want.Skill": { $in: SkillsIHave } }
-        ]
+      // If no filters provided, return all tutors from `MergedUser`
+      tutors = await MergedUser.find({}, { 
+        f_name: 1, 
+        l_name: 1, 
+        email: 1, 
+        university: 1, 
+        gender: 1,
+        skills_i_have: 1, 
+        skills_i_want: 1, 
+        availability: 1, 
+        image: 1
       });
-      console.log("Fetched Tutors from DB:", tutors);
+    } else {
+      // Fetch tutors whose `skills_i_have` matches `SkillsToLearn`
+      // OR whose `skills_i_want` matches `SkillsIHave`
+      tutors = await MergedUser.find({
+        $or: [
+          { skills_i_have: { $regex: new RegExp(SkillsToLearn.join("|"), "i") } },
+          { skills_i_want: { $regex: new RegExp(SkillsIHave.join("|"), "i") } }
+        ]
+      }, {
+        f_name: 1, 
+        l_name: 1, 
+        email: 1, 
+        university: 1, 
+        gender: 1,
+        skills_i_have: 1, 
+        skills_i_want: 1, 
+        availability: 1, 
+        image: 1
+      });
     }
 
-    // Sort tutors based on matching score
+    console.log("Fetched Tutors from DB:", tutors);
+
+    // Sort tutors based on skill match score
     const sortedTutors = tutors.sort((a, b) => {
       const aScore =
-        (SkillsToLearn.includes(a["Skills I Have"]) ? 2 : 0) +
-        (SkillsIHave.includes(a["Skills I Want"]) ? 1 : 0);
+        (SkillsToLearn.some(skill => a.skills_i_have?.toLowerCase().includes(skill.toLowerCase())) ? 2 : 0) +
+        (SkillsIHave.some(skill => a.skills_i_want?.toLowerCase().includes(skill.toLowerCase())) ? 1 : 0);
       const bScore =
-        (SkillsToLearn.includes(b["Skills I Have"]) ? 2 : 0) +
-        (SkillsIHave.includes(b["Skills I Want"]) ? 1 : 0);
+        (SkillsToLearn.some(skill => b.skills_i_have?.toLowerCase().includes(skill.toLowerCase())) ? 2 : 0) +
+        (SkillsIHave.some(skill => b.skills_i_want?.toLowerCase().includes(skill.toLowerCase())) ? 1 : 0);
       return bScore - aScore;
     });
 
@@ -695,6 +1079,7 @@ app.get("/recommendedTutors", async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
 
 
 

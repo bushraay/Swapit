@@ -13,7 +13,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import DropDownPicker from "react-native-dropdown-picker";
-import { storage } from "F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js";
+import { storage } from "C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function AddItemPage() {
@@ -65,7 +65,7 @@ export default function AddItemPage() {
     };
   
     try {
-      const response = await fetch("http://10.20.4.116:5000/addItem", {
+      const response = await fetch("http://10.20.5.247:5000/addItem", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -17,4 +17,3 @@ const MergedUserSchema = new mongoose.Schema({
 }, { collection: 'MergedCollection' });
 
 mongoose.model('MergedUser', MergedUserSchema);
-

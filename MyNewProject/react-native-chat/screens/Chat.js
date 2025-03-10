@@ -52,8 +52,13 @@ function Chat({ route }) {
   const [isTradeTypeModalVisible, setIsTradeTypeModalVisible] = useState(false);
   const [userResponse, setUserResponse] = useState(null);
   const [tradeType, setTradeType] = useState(null);
+  const [recipientName, setRecipientName] = useState(null); // New state for recipient's name
   const messagesRef = useRef(messages);
   const modalTransitionRef = useRef(null);
+
+  useEffect(() => {
+    messagesRef.current = messages;
+  }, [messages]);
 
   useEffect(() => {
     messagesRef.current = messages;
@@ -118,17 +123,14 @@ function Chat({ route }) {
 
   const handleUserResponse = useCallback((response) => {
     console.log('handleUserResponse called with:', response);
-    
+
     if (response === 'Yes') {
-      // Clear any existing timeout
       if (modalTransitionRef.current) {
         clearTimeout(modalTransitionRef.current);
       }
-      
-      // First hide the confirmation modal
+
       setIsConfirmationModalVisible(false);
-      
-      // Set a ref to track the modal state
+
       modalTransitionRef.current = setTimeout(() => {
         console.log('Setting trade type modal visible');
         setIsTradeTypeModalVisible(true);
@@ -138,70 +140,51 @@ function Chat({ route }) {
       setIsConfirmationModalVisible(false);
       navigation.goBack();
     }
-    
+
     setUserResponse(response);
   }, [navigation]);
-  
 
-  // const handleTradeTypeResponse = (type) => {
-  //   setTradeType(type);
-  //   setIsTradeTypeModalVisible(false);
-  
-  //   const logData = {
-  //     currentUser: auth?.currentUser?.email,
-  //     tradedWith: route.params.id, // Assuming this is the recipient's ID
-  //     exchangeType: type,
-  //   };
-  
-  //   console.log('Log Data:', logData); // Optional: Log the data to the console
-  
-  //   // Navigate to the HistoryPage and pass the log data
-  //   navigation.navigate('HistoryPage', { logData });
-  // };
   const handleTradeTypeResponse = useCallback(async (type) => {
     console.log('handleTradeTypeResponse called with:', type);
     setTradeType(type);
-    
-    // Hide the trade type modal first
+
     setIsTradeTypeModalVisible(false);
-    
+
     const currentUserEmail = auth?.currentUser?.email;
-    const tradedWith = route.params.email || route.params.id;
-  
+    // const tradedWith = route.params.email || recipient_email;
+    const tradedWith = route.params.email || route.params.chatName;
+    console.log('Traded With:', tradedWith);
     const logData = {
       currentUser: currentUserEmail,
       tradedWith: tradedWith,
       exchangeType: type,
-      timestamp: new Date().toISOString(),  // Add timestamp for tracking
+      timestamp: new Date().toISOString(),
     };
-  
+
     try {
-      const response = await fetch("http://10.20.1.79:5000/logdata", {
+      const response = await fetch("http://10.20.5.247:5000/logdata", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify(logData),
       });
-  
+
       const result = await response.json();
       console.log("Trade logged successfully:", result);
-  
+
       if (!response.ok) {
         throw new Error("Failed to save log data");
       }
-  
-      // Navigate after a short delay
+
       setTimeout(() => {
         navigation.navigate("HistoryPage", { refresh: true });
       }, Platform.OS === 'ios' ? 500 : 300);
     } catch (error) {
       console.error("Error saving trade data:", error);
-      // Optionally show an error message to the user
     }
   }, [navigation, route.params]);
 
-  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (modalTransitionRef.current) {
@@ -209,11 +192,14 @@ function Chat({ route }) {
       }
     };
   }, []);
-  
-  
+
   useEffect(() => {
     const unsubscribe = onSnapshot(doc(database, 'chats', route.params.id), async (document) => {
-      const recipient_email = document.data().users.find(user => user.email !== auth?.currentUser ?.email).email;
+      const recipient = document.data().users.find(user => user.email !== auth?.currentUser?.email);
+      const recipient_email = recipient.email;
+      const recipient_name = recipient.name; // Extract the recipient's name
+      setRecipientName(recipient_name); // Set the recipient's name in state
+
       const userDocRef = doc(database, 'users', recipient_email);
       const userDocSnap = await getDoc(userDocRef);
       setRecipientToken(userDocSnap.data().token);
@@ -297,12 +283,10 @@ function Chat({ route }) {
       xhr.responseType = 'blob';
       xhr.open('GET', uri, true);
       xhr.send(null);
-      console.log('Image URI:', uri); // Ensure the URI is correct
-
+      console.log('Image URI:', uri);
     });
     const randomString = uuid.v4();
-    const fileRef = ref(getStorage(), `uploads/${randomString}.jpg`); 
-
+    const fileRef = ref(getStorage(), `uploads/${randomString}.jpg`);
 
     const uploadTask = uploadBytesResumable(fileRef, blob);
 
@@ -331,9 +315,28 @@ function Chat({ route }) {
           avatar: 'https://i.pravatar.cc/300',
         },
       },
-    ]);
-  }
-);
+      (error) => {
+        console.error('Error uploading image:', error);
+        setUploading(false);
+      },
+      async () => {
+        const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+        setUploading(false);
+        onSend([
+          {
+            _id: randomString,
+            createdAt: new Date(),
+            text: '',
+            image: downloadUrl,
+            user: {
+              _id: auth?.currentUser?.email,
+              name: auth?.currentUser?.displayName,
+              avatar: 'https://i.pravatar.cc/300',
+            },
+          },
+        ]);
+      }
+    );
   };
 
   const renderBubble = useMemo(
@@ -415,6 +418,10 @@ function Chat({ route }) {
     console.log('isTradeTypeModalVisible:', isTradeTypeModalVisible);
   }, [isTradeTypeModalVisible]);
   
+
+  useEffect(() => {
+    console.log('isTradeTypeModalVisible:', isTradeTypeModalVisible);
+  }, [isTradeTypeModalVisible]);
 
   return (
     <>

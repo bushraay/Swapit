@@ -54,6 +54,30 @@ export default function Myprofile() {
     return <Text>{error}</Text>;
   }
 
+
+  const handleDeleteSkill = async () => {
+    try {
+        const userEmail = await AsyncStorage.getItem("userEmail");
+
+        if (!userEmail) {
+            Alert.alert("Error", "User data not found. Please log in again.");
+            return;
+        }
+
+        const response = await axios.post("http://10.20.5.247:5000/DeleteSkill", { email: userEmail });
+
+        if (response.status === 200) {
+            Alert.alert("Success", "Skill deleted successfully!");
+            navigation.navigate("SkillRecommendationPage");
+        } else {
+            Alert.alert("Error", "Failed to delete skill.");
+        }
+    } catch (error) {
+        console.error("Error deleting skill:", error);
+        Alert.alert("Error", "An unexpected error occurred.");
+    }
+};
+
   return (
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
@@ -131,8 +155,15 @@ export default function Myprofile() {
               style={styles.actionButton}
               onPress={() => navigation.navigate("InfoaddPage")}
             >
-              <Text style={styles.buttonText}>Add Skill</Text>
+              <Text style={styles.buttonText}>Update Skill</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+                style={styles.actionButton}
+                onPress={handleDeleteSkill}
+              >
+                <Text style={styles.buttonText}>Delete Skill</Text>
+              </TouchableOpacity>
+
             <TouchableOpacity
               style={styles.actionButton}
               onPress={() => navigation.navigate("AddItemPage")}

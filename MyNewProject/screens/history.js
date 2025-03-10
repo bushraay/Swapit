@@ -193,4 +193,3 @@ const styles = StyleSheet.create({
   footerButton: { alignItems: "center" },
   footerIcon: { width: 30, height: 30, tintColor: "#FFF" },
 });
-

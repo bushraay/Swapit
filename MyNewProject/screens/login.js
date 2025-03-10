@@ -39,7 +39,7 @@ const LoginPage = ({ navigation }) => {
     try {
       const userData = { email, password };
       const res = await axios.post(
-        "http://10.20.6.136:5000/Login",
+        "http://192.168.0.103:5000/Login",
         userData,
         { timeout: 10000 }
       );

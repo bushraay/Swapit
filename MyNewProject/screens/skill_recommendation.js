@@ -552,7 +552,7 @@ export default function SkillRecommendationPage() {
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
-        const response = await axios.get("http://10.20.6.136:5000/recommendedTutors");
+        const response = await axios.get("http://192.168.0.103:5000/recommendedTutors");
         console.log("API Response:", response.data); // Debugging
   
         if (response.data.status === "Ok" && response.data.data.length > 0) {

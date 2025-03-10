@@ -33,7 +33,7 @@ export default function HistoryPage() {
 
         console.log("Fetching history for:", userEmail);
 
-        const response = await fetch(`http://10.20.6.136:5000/logdata?email=${encodeURIComponent(userEmail)}`);
+        const response = await fetch(`http://192.168.0.103:5000/logdata?email=${encodeURIComponent(userEmail)}`);
         const result = await response.json();
 
         if (response.ok) {

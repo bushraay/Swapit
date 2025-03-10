@@ -34,7 +34,7 @@ export default function Myprofile() {
         }
 
         // Fetch the user profile using the email
-        const response = await axios.get(`http://10.20.6.136:5000/getUserProfileByEmail?email=${email}`);
+        const response = await axios.get(`http://192.168.0.103:5000/getUserProfileByEmail?email=${email}`);
         setUserData(response.data.data);  // Assuming the API returns the user data inside `data`
       } catch (err) {
         setError("Error fetching user profile");

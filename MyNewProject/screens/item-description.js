@@ -28,7 +28,7 @@
 //       const ownerFullName = Item.Name; // Ensure this is the correct field
   
 //       // 2. Find owner in MongoDB
-//       const mongoResponse = await fetch('10.20.6.136:5000/get-user-by-fullname', {
+//       const mongoResponse = await fetch('192.168.0.103:5000/get-user-by-fullname', {
 //         method: 'POST',
 //         headers: {
 //           'Content-Type': 'application/json',
@@ -304,7 +304,7 @@ export default function ItemDescriptionPage({ route }) {
       const ownerFullName = item.Name; 
       console.log('Owner Full Name:', ownerFullName);
 
-      const mongoResponse = await fetch('http://10.20.6.136:5000/get-user-by-fullname', {
+      const mongoResponse = await fetch('http://192.168.0.103:5000/get-user-by-fullname', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

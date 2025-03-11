@@ -29,7 +29,7 @@ export default function RecommendationPage() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await axios.get("http://192.168.0.103:5000/recommendedItems");
+        const response = await axios.get("http://10.20.4.153:5000/recommendedItems");
         if (response.data.status === "Ok") {
           setItems(response.data.data);
           setFilteredItems(response.data.data); // Initially display all items
@@ -68,8 +68,8 @@ export default function RecommendationPage() {
 
     // Filter by search query (only item name)
     if (query.trim() !== "") {
-      filtered = filtered.filter((item) =>
-        item.ItemName.toLowerCase().includes(query.toLowerCase())
+      filtered = filtered.filter((item) => 
+        item.ItemName && item.ItemName.toLowerCase().includes(query.toLowerCase()) // Check if ItemName exists
       );
     }
 

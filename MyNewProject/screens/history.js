@@ -381,7 +381,7 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { auth } from "C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js";
+import { auth } from 'F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js';
 import Icon from "react-native-vector-icons/FontAwesome"; // Import star icons for rating
 
 export default function HistoryPage() {

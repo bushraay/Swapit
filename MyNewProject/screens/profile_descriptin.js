@@ -184,8 +184,24 @@ export default function TutorProfilePage({ route, navigation }) {
         try {
             setLoading(true);
 
-            const tutorFullName = tutor.f_name + " " + tutor.l_name;
-            console.log("Tutor's Full Name:", tutorFullName);
+                  {/* Tutor Profile */}
+                  <View style={styles.profileContainer}>
+                      <Icon name="user-circle" size={100} color="#007B7F" />
+                      <Text style={styles.tutorName}>{tutor.Name || 'No Name'}</Text>
+                      <Text style={styles.tutorDetails}>{tutor.university || 'Unknown University'}</Text>
+                      <Text style={styles.tutorDetails}>
+                          Availability: {tutor.availability || 'Not Available'}
+                      </Text>
+                  </View>
+                  {/* Skills */}
+<View style={styles.section}>
+    <Text style={styles.sectionTitle}>My Skills:</Text>
+    <Text style={styles.skillItem}>
+        {tutor.Skills_i_have && tutor.Skills_i_have.trim() !== ""
+            ? tutor.Skills_i_have
+            : "No skills listed"}
+    </Text>
+</View>
 
             // ✅ 1. Fetch the tutor's email from MongoDB
             const mongoResponse = await axios.post("http://10.20.5.187:5000/get-user-by-fullname", {

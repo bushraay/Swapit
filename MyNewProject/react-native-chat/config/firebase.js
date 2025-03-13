@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
 import { initializeAuth } from 'firebase/auth'; // Removed getReactNativePersistence
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Anas - Firebase config
 const firebaseConfig = {
@@ -25,6 +26,9 @@ const firebaseConfig = {
 
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
+const storage = getStorage(app);
+
+export { storage };
 
 // Initialize Firebase Auth without persistence
 export const auth = initializeAuth(app);

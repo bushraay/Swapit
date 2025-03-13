@@ -13,7 +13,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import axios from 'axios';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
-import { auth, database } from 'C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js'; 
+import { auth, database } from 'F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js'; 
 import { doc, setDoc,getDoc } from 'firebase/firestore';
 
 export default function CreateAccountPage({ navigation }) {

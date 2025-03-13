@@ -188,7 +188,7 @@ export default function TutorProfilePage({ route, navigation }) {
             console.log("Tutor's Full Name:", tutorFullName);
 
             // ✅ 1. Fetch the tutor's email from MongoDB
-            const mongoResponse = await axios.post("http://10.20.5.247:5000/get-user-by-fullname", {
+            const mongoResponse = await axios.post("http://10.20.5.187:5000/get-user-by-fullname", {
                 fullName: tutorFullName
             });
 

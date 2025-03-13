@@ -1017,6 +1017,70 @@ app.post('/Login', async (req, res) => {
 //   }
 // });
 
+// app.get("/recommendedTutors", async (req, res) => {
+//   try {
+//     const SkillsToLearn = req.query.SkillsToLearn ? req.query.SkillsToLearn.split(",") : [];
+//     const SkillsIHave = req.query.SkillsIHave ? req.query.SkillsIHave.split(",") : [];
+
+//     let tutors;
+    
+//     if (SkillsToLearn.length === 0 && SkillsIHave.length === 0) {
+//       // If no filters provided, return all tutors from `MergedUser`
+//       tutors = await MergedUser.find({}, { 
+//         f_name: 1, 
+//         l_name: 1, 
+//         email: 1, 
+//         university: 1, 
+//         gender: 1,
+//         skills_i_have: 1, 
+//         skills_i_want: 1, 
+//         availability: 1, 
+//         image: 1
+//       });
+//     } else {
+//       // Fetch tutors whose `skills_i_have` matches `SkillsToLearn`
+//       // OR whose `skills_i_want` matches `SkillsIHave`
+//       tutors = await MergedUser.find({
+//         $or: [
+//           { skills_i_have: { $regex: new RegExp(SkillsToLearn.join("|"), "i") } },
+//           { skills_i_want: { $regex: new RegExp(SkillsIHave.join("|"), "i") } }
+//         ]
+//       }, {
+//         f_name: 1, 
+//         l_name: 1, 
+//         email: 1, 
+//         university: 1, 
+//         gender: 1,
+//         skills_i_have: 1, 
+//         skills_i_want: 1, 
+//         availability: 1, 
+//         image: 1
+//       });
+//     }
+
+//     console.log("Fetched Tutors from DB:", tutors);
+
+//     // Sort tutors based on skill match score
+//     const sortedTutors = tutors.sort((a, b) => {
+//       const aScore =
+//         (SkillsToLearn.some(skill => a.skills_i_have?.toLowerCase().includes(skill.toLowerCase())) ? 2 : 0) +
+//         (SkillsIHave.some(skill => a.skills_i_want?.toLowerCase().includes(skill.toLowerCase())) ? 1 : 0);
+//       const bScore =
+//         (SkillsToLearn.some(skill => b.skills_i_have?.toLowerCase().includes(skill.toLowerCase())) ? 2 : 0) +
+//         (SkillsIHave.some(skill => b.skills_i_want?.toLowerCase().includes(skill.toLowerCase())) ? 1 : 0);
+//       return bScore - aScore;
+//     });
+
+//     const limitedTutors = sortedTutors.slice(0, 100); // Limit results
+
+//     res.status(200).json({ status: "Ok", data: limitedTutors });
+//   } catch (error) {
+//     console.error("Error fetching tutors:", error);
+//     res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
+
 app.get("/recommendedTutors", async (req, res) => {
   try {
     const SkillsToLearn = req.query.SkillsToLearn ? req.query.SkillsToLearn.split(",") : [];
@@ -1025,8 +1089,8 @@ app.get("/recommendedTutors", async (req, res) => {
     let tutors;
     
     if (SkillsToLearn.length === 0 && SkillsIHave.length === 0) {
-      // If no filters provided, return all tutors from `MergedUser`
-      tutors = await MergedUser.find({}, { 
+      // If no filters provided, return only 10 tutors from `MergedUser `
+      tutors = await MergedUser .find({}, { 
         f_name: 1, 
         l_name: 1, 
         email: 1, 
@@ -1036,14 +1100,14 @@ app.get("/recommendedTutors", async (req, res) => {
         skills_i_want: 1, 
         availability: 1, 
         image: 1
-      });
+      }) // Limit to 10 tutors
     } else {
       // Fetch tutors whose `skills_i_have` matches `SkillsToLearn`
       // OR whose `skills_i_want` matches `SkillsIHave`
-      tutors = await MergedUser.find({
+      tutors = await MergedUser .find({
         $or: [
-          { skills_i_have: { $regex: new RegExp(SkillsToLearn.join("|"), "i") } },
-          { skills_i_want: { $regex: new RegExp(SkillsIHave.join("|"), "i") } }
+          { skills_i_have: { $regex: SkillsToLearn.map(skill => skill.toLowerCase()).join("|"), $options: "i" } },
+          { skills_i_want: { $regex: SkillsIHave.map(skill => skill.toLowerCase()).join("|"), $options: "i" } }
         ]
       }, {
         f_name: 1, 
@@ -1071,14 +1135,13 @@ app.get("/recommendedTutors", async (req, res) => {
       return bScore - aScore;
     });
 
-    const limitedTutors = sortedTutors.slice(0, 10); // Limit results
-
-    res.status(200).json({ status: "Ok", data: limitedTutors });
+    res.status(200).json({ status: "Ok", data: sortedTutors });
   } catch (error) {
     console.error("Error fetching tutors:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 });
+
 
 
 
@@ -1157,6 +1220,105 @@ app.get('/recommendedItems', async (req, res) => {
       res.status(500).json({ message: 'Internal server error' });
    }
 });
+
+
+
+// API to submit a review
+app.post("/submit-review", async (req, res) => {
+  try {
+      console.log("Received request body:", req.body);
+
+      const { reviewedUsername, reviewData } = req.body;
+
+      if (!reviewedUsername || !reviewData || !reviewData.rating || !reviewData.comment || !reviewData.reviewerUsername) {
+          console.log("Missing required fields:", req.body);
+          return res.status(400).json({ message: "Missing required fields" });
+      }
+
+      console.log("Searching for user with username:", reviewedUsername);
+
+      // Find the user by username
+      const user = await User.findOne({ username: reviewedUsername });
+
+      if (!user) {
+          console.log("User not found in database:", reviewedUsername);
+          return res.status(404).json({ message: "User not found" });
+      }
+
+      console.log("User found, adding review...");
+
+      // Create a new review object
+      const newReview = {
+          reviewerUsername: reviewData.reviewerUsername,
+          rating: reviewData.rating,
+          comment: reviewData.comment,
+          timestamp: new Date()
+      };
+
+      // Push the review to the user's reviews array
+      await User.updateOne(
+          { username: reviewedUsername },
+          { $push: { reviews: newReview } }
+      );
+
+      console.log("Review added successfully:", newReview);
+      res.status(201).json({ message: "Review submitted successfully", review: newReview });
+  } catch (error) {
+      console.error("Error saving review:", error);
+      res.status(500).json({ message: "Internal Server Error" });
+  }
+});
+
+// // API to fetch reviews of a user
+// app.get("/user-reviews", async (req, res) => {
+//   try {
+//       const { username } = req.query;
+
+//       if (!username) {
+//           return res.status(400).json({ message: "Username is required" });
+//       }
+
+//       console.log("Searching for user with username:", username);
+
+//       // Find user by username
+//       const user = await User.findOne({ username: username });
+
+//       if (!user) {
+//           console.log("User not found in database:", username);
+//           return res.status(404).json({ message: "User not found" });
+//       }
+
+//       console.log("User found, returning reviews:", user.reviews);
+//       res.status(200).json({ reviews: user.reviews });
+//   } catch (error) {
+//       console.error("Error fetching reviews:", error);
+//       res.status(500).json({ message: "Internal server error" });
+//   }
+// });
+
+// ✅ API to Fetch Reviews by User Email
+app.get("/getUserReviews", async (req, res) => {
+  try {
+      const { email } = req.query;
+
+      if (!email) {
+          return res.status(400).json({ message: "Email is required." });
+      }
+
+      // Find user by email
+      const user = await User.findOne({ email }, { reviews: 1, _id: 0 });
+
+      if (!user) {
+          return res.status(404).json({ message: "User not found." });
+      }
+
+      res.status(200).json({ reviews: user.reviews });
+  } catch (error) {
+      console.error("Error fetching reviews:", error);
+      res.status(500).json({ message: "Internal server error." });
+  }
+});
+
 
 // Update your server endpoint to handle search
 app.get('/searchItems', async (req, res) => {

@@ -304,7 +304,7 @@ export default function ItemDescriptionPage({ route }) {
       const ownerFullName = item.Name; 
       console.log('Owner Full Name:', ownerFullName);
 
-      const mongoResponse = await fetch('http://10.20.5.247:5000/get-user-by-fullname', {
+      const mongoResponse = await fetch('http://10.20.5.187:5000/get-user-by-fullname', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

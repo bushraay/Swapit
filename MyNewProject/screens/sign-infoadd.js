@@ -181,7 +181,7 @@ export default function InfoAddPage() {
         }
 
         // Fetch user ID from the backend before sending skill data
-        const userResponse = await axios.get(`http://10.20.5.247:5000/getUserProfileByEmail?email=${userEmail}`);
+        const userResponse = await axios.get(`http://10.20.5.187:5000/getUserProfileByEmail?email=${userEmail}`);
 
         if (!userResponse.data.data || !userResponse.data.data._id) {
             Alert.alert("Error", "User ID not found. Try logging in again.");
@@ -221,7 +221,7 @@ export default function InfoAddPage() {
         console.log("Sending skills data:", skillsData);
 
         const response = await axios.post(
-            "http://10.20.5.247:5000/AddSkills",
+            "http://10.20.5.187:5000/AddSkills",
             skillsData,
             { timeout: 10000 }
         );
@@ -284,7 +284,7 @@ const handleUpdateSkill = async () => {
 
       console.log("Sending skill data:", skillData);  // Debugging output
 
-      const response = await axios.post("http://10.20.5.247:5000/UpdateSkill", skillData);
+      const response = await axios.post("http://10.20.5.187:5000/UpdateSkill", skillData);
 
       if (response.status === 200) {
           Alert.alert("Success", "Skill updated successfully!");

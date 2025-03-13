@@ -16,7 +16,7 @@ export default function SkillDescriptionPage({ route }) {
       const ownerFullName = skill.name; // Ensure this matches the skill data structure
       console.log('Owner Full Name:', ownerFullName);
 
-      const mongoResponse = await fetch('http://10.20.5.247:5000/get-user-by-fullname', {
+      const mongoResponse = await fetch('http://10.20.5.187:5000/get-user-by-fullname', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

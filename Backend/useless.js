@@ -157,7 +157,7 @@ function Chat({ route }) {
     };
 
     try {
-      const response = await fetch("http://10.20.7.24:5000/logdata", {
+      const response = await fetch("http://10.20.5.187:5000/logdata", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -431,7 +431,7 @@ export default function HistoryPage() {
 
         console.log("Fetching history for:", userEmail);
 
-        const response = await fetch(`http://10.20.7.24:5000/logdata?email=${encodeURIComponent(userEmail)}`);
+        const response = await fetch(`http://10.20.5.187:5000/logdata?email=${encodeURIComponent(userEmail)}`);
         const result = await response.json();
 
         if (response.ok) {

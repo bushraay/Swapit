@@ -87,7 +87,7 @@ export default function CreateAccountPage({ navigation }) {
   const checkEmailExists = async (email) => {
     try {
       // Check MongoDB
-      const mongoResponse = await axios.post('http://10.20.5.247/check-email', { 
+      const mongoResponse = await axios.post('http://10.20.5.187/check-email', { 
         email 
       });
       const mongoExists = mongoResponse.data.exists;
@@ -130,7 +130,7 @@ export default function CreateAccountPage({ navigation }) {
         password: password,
       };
   
-      const res = await axios.post("http://10.20.5.247:5000/CreateAccount", userData, {
+      const res = await axios.post("http://10.20.5.187:5000/CreateAccount", userData, {
         timeout: 20000,
       });
   

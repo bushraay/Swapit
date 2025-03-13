@@ -65,7 +65,7 @@ export default function AddItemPage() {
     };
   
     try {
-      const response = await fetch("http://10.20.5.247:5000/addItem", {
+      const response = await fetch("http://10.20.5.187:5000/addItem", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

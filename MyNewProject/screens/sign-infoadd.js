@@ -251,6 +251,9 @@ export default function InfoAddPage() {
         }
     }
 };
+const handleUpdateSkill = async () => {
+  try {
+      const userEmail = await AsyncStorage.getItem("userEmail");
 
       if (!userEmail) {
           Alert.alert("Error", "User data not found. Please log in again.");

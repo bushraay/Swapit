@@ -13,7 +13,7 @@ import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from "firebase/auth";
 
-import { auth } from 'F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js';
+import { auth } from 'C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js';
 
 const LoginPage = ({ navigation }) => {
   const [email, setEmail] = useState("");

@@ -28,7 +28,7 @@
 //       const ownerFullName = Item.Name; // Ensure this is the correct field
   
 //       // 2. Find owner in MongoDB
-//       const mongoResponse = await fetch('192.168.0.103:5000/get-user-by-fullname', {
+//       const mongoResponse = await fetch('192.168.0.102:5000/get-user-by-fullname', {
 //         method: 'POST',
 //         headers: {
 //           'Content-Type': 'application/json',
@@ -290,7 +290,7 @@ import {
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
-import { auth, database } from 'F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js';
+import { auth, database } from 'C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 export default function ItemDescriptionPage({ route }) {

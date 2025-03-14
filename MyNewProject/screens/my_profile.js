@@ -412,7 +412,7 @@ export default function Myprofile() {
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={styles.actionButton}
-              onPress={() => navigation.navigate("InfoaddPage")}
+              onPress={() => navigation.navigate("InfoAddPage")}
             >
               <Text style={styles.buttonText}>Update Skill</Text>
             </TouchableOpacity>

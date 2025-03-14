@@ -1150,7 +1150,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { GiftedChat, Bubble, Send, InputToolbar } from 'react-native-gifted-chat';
-import { auth, database } from 'F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js';
+import { auth, database } from 'C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js';
 import { doc, onSnapshot, setDoc, getDoc } from 'firebase/firestore';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 import { colors } from '../config/constants';
@@ -1160,7 +1160,6 @@ import * as ImagePicker from 'expo-image-picker';
 import uuid from 'react-native-uuid';
 import Modal from 'react-native-modal';
 import { Button } from 'react-native-paper';
-
 
 async function sendPushNotification(expoPushToken, message, senderName) {
   const response = await fetch('https://exp.host/--/api/v2/push/send', {
@@ -1199,10 +1198,6 @@ function Chat({ route }) {
     messagesRef.current = messages;
   }, [messages]);
 
-  useEffect(() => {
-    messagesRef.current = messages;
-  }, [messages]);
-  
   const handleBackPress = useCallback(() => {
     const userMessages = messagesRef.current.filter(
       (message) => message.user._id === auth?.currentUser?.email
@@ -1464,29 +1459,10 @@ useFocusEffect(
     const uploadTask = uploadBytesResumable(fileRef, blob);
 
     uploadTask.on(
-  'state_changed',
-  (snapshot) => {
-    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-    console.log('Upload percent:', progress);
-  },
-  (error) => {
-    console.error('Error uploading image:', error); // Log the upload error
-    setUploading(false); // Ensure we update state
-  },
-  async () => {
-    const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
-    setUploading(false);
-    onSend([
-      {
-        _id: randomString,
-        createdAt: new Date(),
-        text: '',
-        image: downloadUrl,
-        user: {
-          _id: auth?.currentUser ?.email,
-          name: auth?.currentUser ?.displayName,
-          avatar: 'https://i.pravatar.cc/300',
-        },
+      'state_changed',
+      (snapshot) => {
+        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        console.log('Upload percent:', progress);
       },
       (error) => {
         console.error('Error uploading image:', error);
@@ -1587,10 +1563,6 @@ useFocusEffect(
     ),
     []
   );
-  useEffect(() => {
-    console.log('isTradeTypeModalVisible:', isTradeTypeModalVisible);
-  }, [isTradeTypeModalVisible]);
-  
 
   useEffect(() => {
     console.log('isTradeTypeModalVisible:', isTradeTypeModalVisible);

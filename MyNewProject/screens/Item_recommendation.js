@@ -68,8 +68,8 @@ export default function RecommendationPage() {
 
     // Filter by search query (only item name)
     if (query.trim() !== "") {
-      filtered = filtered.filter((item) => 
-        item.ItemName && item.ItemName.toLowerCase().includes(query.toLowerCase()) // Check if ItemName exists
+      filtered = filtered.filter((item) =>
+        item.ItemName.toLowerCase().includes(query.toLowerCase())
       );
     }
 

@@ -13,7 +13,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import * as ImagePicker from "expo-image-picker";
 import DropDownPicker from "react-native-dropdown-picker";
-import { storage } from "F:/FYP - SwapIt/fyp/MyNewProject/react-native-chat/config/firebase.js";
+import { storage } from "C:/Users/Hp/Documents/GitHub/fyp/MyNewProject/react-native-chat/config/firebase.js";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 export default function AddItemPage() {
